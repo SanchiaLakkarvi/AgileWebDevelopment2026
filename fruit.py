@@ -1,2 +1,5 @@
 def fruit():
-    print("apple")
+    print("Apple")
+    print("Banana")
+    print("Mango")
+

@@ -3,4 +3,3 @@ def fruit():
     print("Banana")
     print("Mango")
 
-fruit()

@@ -1,0 +1,28 @@
+:root {
+  --app-navbar-bg: #1e3a8a;
+}
+
+body {
+  font-family: "Segoe UI", sans-serif;
+}
+
+.app-navbar {
+  background: var(--app-navbar-bg);
+}
+
+.app-navbar .navbar-brand,
+.app-navbar .nav-link {
+  color: #ffffff;
+}
+
+.app-navbar .nav-link {
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 0.3rem 0.6rem;
+}
+
+.app-navbar .nav-link:hover,
+.app-navbar .nav-link.active {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.2);
+}

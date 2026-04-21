@@ -11,45 +11,23 @@
     rel="stylesheet"
   />
 
-  <!-- Custom CSS -->
+  <!-- Shared global styles -->
+  <link rel="stylesheet" href="../../styles/global.css" />
+
+  <!-- Homepage styles -->
   <link rel="stylesheet" href="../../styles/style.css" />
 </head>
 <body>
-
-  <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-dark custom-navbar">
-    <div class="container">
-      <a class="navbar-brand fw-bold" href="#">GuildSpace</a>
-      <button
-        class="navbar-toggler"
-        type="button"
-        data-bs-toggle="collapse"
-        data-bs-target="#navbarNav"
-        aria-controls="navbarNav"
-        aria-expanded="false"
-        aria-label="Toggle navigation"
-      >
-        <span class="navbar-toggler-icon"></span>
-      </button>
-
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav ms-auto">
-          <li class="nav-item"><a class="nav-link active" href="#">Home</a></li>
-          <li class="nav-item"><a class="nav-link" href="../Forum/forum.html">Forum</a></li>
-          <li class="nav-item"><a class="nav-link" href="../Marketplace/marketplace.html">Marketplace</a></li>
-          <li class="nav-item"><a class="nav-link" href="../LostFound/lostfound.html">Lost & Found</a></li>
-          <li class="nav-item"><a class="nav-link" href="../Login/login.html">Login</a></li>
-        </ul>
-      </div>
-    </div>
-  </nav>
+  <!-- Reusable Navbar Mount -->
+  <div data-navbar data-active="home"></div>
 
   <!-- Hero Section -->
   <header class="hero-section text-white d-flex align-items-center">
     <div class="container text-center">
       <h1 class="display-4 fw-bold mb-3">Welcome to GuildSpace</h1>
       <p class="lead mb-4">
-        A blue-themed student-only UWA community platform for lost property, second-hand trading, and campus interaction.
+        A student-only UWA community platform for lost property, second-hand trading,
+        and campus interaction.
       </p>
       <div class="d-flex justify-content-center gap-3 flex-wrap">
         <a href="../Forum/forum.html" class="btn btn-light btn-lg px-4">Explore Community</a>
@@ -88,7 +66,7 @@
     </div>
   </section>
 
-  <!-- Features -->
+  <!-- Features Section -->
   <section class="py-5 bg-light">
     <div class="container">
       <div class="text-center mb-5">
@@ -186,7 +164,7 @@
     </div>
   </section>
 
-  <!-- Preview -->
+  <!-- Community Preview -->
   <section class="py-5 bg-light">
     <div class="container">
       <div class="text-center mb-5">
@@ -243,7 +221,7 @@
     </div>
   </section>
 
-  <!-- CTA -->
+  <!-- Call to Action -->
   <section class="py-5 cta-section text-white text-center">
     <div class="container">
       <h2 class="fw-bold mb-3">Start using GuildSpace today</h2>
@@ -262,6 +240,10 @@
     </div>
   </footer>
 
+  <!-- Shared Navbar Component -->
+  <script src="../../components/navbar.js"></script>
+
+  <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

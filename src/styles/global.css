@@ -1,5 +1,13 @@
+:root {
+  --app-navbar-bg: #1e3a8a;
+}
+
+body {
+  font-family: "Segoe UI", sans-serif;
+}
+
 .app-navbar {
-  background: #1E3A8A;
+  background: var(--app-navbar-bg);
 }
 
 .app-navbar .navbar-brand,

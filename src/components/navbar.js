@@ -5,7 +5,7 @@
   }
 
   const active = String(slot.dataset.active || "").toLowerCase();
-  const base = String(slot.dataset.base || "../");
+  const base = "../";
   const collapseId = String(slot.dataset.collapseId || "appNavbarMenu");
 
   const links = [

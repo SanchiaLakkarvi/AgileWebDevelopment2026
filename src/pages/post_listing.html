@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-shell">
+    <div class="marketplace-wrapper">
+        <h1>Post a New Listing</h1>
+
+        <form method="POST" class="listing-form">
+            <label for="title">Item Title</label>
+            <input type="text" id="title" name="title" required>
+
+            <label for="price">Price</label>
+            <input type="number" id="price" name="price" required>
+
+            <label for="image">Image Filename</label>
+            <input type="text" id="image" name="image" placeholder="example: bag.jpg" required>
+
+            <label for="seller">Seller Name</label>
+            <input type="text" id="seller" name="seller" required>
+
+            <label for="category">Category</label>
+            <input type="text" id="category" name="category" required>
+
+            <label for="description">Description</label>
+            <textarea id="description" name="description" rows="5" required></textarea>
+
+            <button type="submit" class="publish-btn">Add Listing</button>
+        </form>
+    </div>
+</section>
+{% endblock %}

@@ -1,6 +1,12 @@
 {% extends "base.html" %}
 
-{% block content %}
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/style.css') }}" />
+{% endblock %}
+
+{% block body %}
+<div data-navbar data-active="{{ active_nav }}"></div>
+
 <section class="page-shell">
     <div class="marketplace-wrapper">
         {% if item %}

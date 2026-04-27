@@ -35,6 +35,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install flask
 pip install flask-sqlalchemy
+pip install flask-mail
 python app.py
 ```
 
@@ -54,3 +55,28 @@ Open:
 - `POST /forum/<post_id>/like`
 - `POST /forum/<post_id>/dislike`
 - `POST /forum/<post_id>/comment`
+
+## Comment Email Notification (Flask-Mail)
+
+This demo supports a checked-in config file:
+
+- `mail_config.py` (recommended for this project)
+
+Edit these values in `mail_config.py`:
+
+- `MAIL_SERVER`
+- `MAIL_PORT`
+- `MAIL_USE_TLS`
+- `MAIL_USE_SSL`
+- `MAIL_USERNAME`
+- `MAIL_PASSWORD`
+- `MAIL_DEFAULT_SENDER`
+
+You can still use environment variables if needed:
+
+- `MAIL_SERVER`
+- `MAIL_PORT` (default `587`)
+- `MAIL_USE_TLS` (`1` or `0`, default `1`)
+- `MAIL_USERNAME`
+- `MAIL_PASSWORD`
+- `MAIL_DEFAULT_SENDER`

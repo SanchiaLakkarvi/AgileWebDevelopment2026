@@ -1,9 +1,10 @@
 import os
 from datetime import datetime
 
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, current_app, flash, redirect, render_template, request, url_for
+from flask_mail import Message
 
-from server.extensions import db
+from server.extensions import db, mail
 from server.forum.models import Comment, Post
 
 forum_bp = Blueprint("forum", __name__)
@@ -40,6 +41,31 @@ def relative_time(value) -> str:
     return format_dt(value)
 
 
+def send_comment_notification(post, comment_author: str, comment_text: str) -> bool:
+    """Send email notification to post owner when a new comment is added."""
+
+    recipient = (post.author_email or "").strip()
+    if not recipient:
+        return False
+
+    if not current_app.config.get("MAIL_SERVER"):
+        return False
+
+    msg = Message(
+        subject=f"GuildSpace: new comment on '{post.title}'",
+        recipients=[recipient],
+    )
+    msg.body = (
+        f"Hi {post.author},\n\n"
+        f"You have a new comment on your post '{post.title}'.\n\n"
+        f"Comment by: {comment_author}\n"
+        f"Comment: {comment_text}\n\n"
+        f"Open forum: {url_for('forum.forum_page', _external=True)}\n"
+    )
+    mail.send(msg)
+    return True
+
+
 @forum_bp.app_context_processor
 def inject_template_helpers():
     # Expose formatting helpers directly to Jinja templates.
@@ -64,6 +90,7 @@ def forum_page() -> str:
 @forum_bp.post("/forum/post")
 def create_post():
     author = str(request.form.get("author", "")).strip()
+    author_email = str(request.form.get("author_email", "")).strip()
     title = str(request.form.get("title", "")).strip()
     content = str(request.form.get("content", "")).strip()
     category = str(request.form.get("category", "")).strip()
@@ -95,6 +122,7 @@ def create_post():
 
     post = Post(
         author=author,
+        author_email=author_email,
         title=title,
         content=content,
         category=category,
@@ -125,7 +153,7 @@ def dislike_post(post_id: int):
 
 @forum_bp.post("/forum/<int:post_id>/comment")
 def add_comment(post_id: int):
-    _ = db.get_or_404(Post, post_id)
+    post = db.get_or_404(Post, post_id)
 
     author = str(request.form.get("author", "You")).strip() or "You"
     text = str(request.form.get("text", "")).strip()
@@ -141,6 +169,15 @@ def add_comment(post_id: int):
         )
     )
     db.session.commit()
+
+    try:
+        sent = send_comment_notification(post, author, text)
+        if sent:
+            flash("Comment added. Email notification sent.", "success")
+            return redirect(url_for("forum.forum_page", _anchor=f"post-{post_id}"))
+    except Exception:
+        flash("Comment added, but email notification failed.", "warning")
+        return redirect(url_for("forum.forum_page", _anchor=f"post-{post_id}"))
 
     # PRG pattern: avoid duplicate form submissions on refresh.
     flash("Comment added.", "success")

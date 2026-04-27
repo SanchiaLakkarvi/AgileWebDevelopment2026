@@ -157,8 +157,10 @@
     if (!panel) {
       return;
     }
-    const postCard = button.closest(".post-item");
-    const commentCount = Number(postCard?.dataset.comments || 0);
+
+    if (!button.dataset.defaultLabel) {
+      button.dataset.defaultLabel = button.innerHTML;
+    }
 
     const isHidden = panel.hasAttribute("hidden");
     if (isHidden) {
@@ -166,7 +168,7 @@
       button.setAttribute("aria-expanded", "true");
       button.classList.remove("btn-outline-primary");
       button.classList.add("btn-primary", "active");
-      button.textContent = `Hide ${commentCount}`;
+      button.textContent = "Hide";
       return;
     }
 
@@ -174,7 +176,7 @@
     button.setAttribute("aria-expanded", "false");
     button.classList.remove("btn-primary", "active");
     button.classList.add("btn-outline-primary");
-    button.textContent = `Comments ${commentCount}`;
+    button.innerHTML = button.dataset.defaultLabel;
   });
 
   window.addEventListener("resize", () => {

@@ -10,6 +10,7 @@ class Post(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     author = db.Column(db.String(40), nullable=False)
+    author_email = db.Column(db.String(120), nullable=True)
     title = db.Column(db.String(100), nullable=False)
     content = db.Column(db.String(500), nullable=False)
     category = db.Column(db.String(20), nullable=False)

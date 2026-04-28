@@ -1,69 +1,133 @@
-# AgileWebDevelopment2026
+# GuildSpace (AgileWebDevelopment2026)
 
-## Minimal Backend Setup (Flask + Jinja)
+A Flask + Jinja course project (local demo version).
 
-This project is simplified to match the lecture baseline:
-- Flask server
-- Jinja templates for server-side rendering
-- Basic form handling with POST + redirect
-- Forum data persisted in SQLite via SQLAlchemy
-- Marketplace flow handled with in-memory listings
+## 1. Project Overview
 
-No AJAX API is required in this simplified version.
+This project currently follows a **client-server architecture**:
+- Backend: Flask (routing, template rendering, form handling)
+- Frontend: Jinja templates + Bootstrap + existing static CSS/JS
+- Data: SQLite (Forum), in-memory list (Marketplace)
+- Email: Flask-Mail (Forum comment notifications)
 
-## Project Structure
+## 2. Current Folder Structure
 
-- `app.py`: app entry point only
-- `server/`: backend package
-- `server/__init__.py`: app factory and configuration
-- `server/forum/models.py`: forum database models
-- `server/forum/routes.py`: forum routes and handlers
-- `server/marketplace/routes.py`: marketplace routes and handlers
-- `templates/base.html`: shared Jinja layout
-- `templates/forum.html`: forum page (server-rendered posts + forms)
-- `src/styles/`: CSS files
-- `src/components/navbar.js`: reusable navbar component
+```text
+.
+├── app.py
+├── mail_config.py
+├── data/
+│   └── forum.db
+├── server/
+│   ├── __init__.py
+│   ├── extensions.py
+│   ├── routes/
+│   │   ├── __init__.py
+│   │   ├── forum.py
+│   │   └── marketplace.py
+│   ├── models/
+│   │   ├── __init__.py
+│   │   └── forum.py
+│   └── utils/
+│       ├── __init__.py
+│       └── mailer.py
+├── templates/
+│   ├── base.html
+│   ├── home.html
+│   ├── login.html
+│   ├── register.html
+│   ├── forum.html
+│   ├── marketplace.html
+│   ├── post_listing.html
+│   └── message_seller.html
+├── src/
+│   ├── components/
+│   │   └── navbar.js
+│   ├── pages/
+│   │   └── Forum/forum.js
+│   ├── styles/
+│   │   ├── global.css
+│   │   ├── homepage.css
+│   │   ├── login.css
+│   │   ├── forum.css
+│   │   └── marketplace.css
+│   ├── uploads/
+│   └── assets/
+└── static/
+    └── images/
+```
 
-## Run Locally
+## 3. Run Locally
 
-1. Create and activate a virtual environment
-2. Install dependencies
-3. Start server
+### 3.1 Create a virtual environment and install dependencies
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install flask
-pip install flask-sqlalchemy
-pip install flask-mail
-python app.py
+pip install flask flask-sqlalchemy flask-mail
 ```
 
-Open:
-- `http://127.0.0.1:5000/` (home)
-- `http://127.0.0.1:5000/forum`
-- `http://127.0.0.1:5000/marketplace`
+### 3.2 Start the server
 
-## Main Routes
+```bash
+python3 app.py
+```
 
-- `GET /`
-- `GET /forum`
-- `GET /marketplace`
-- `GET/POST /post-listing`
-- `GET /message-seller/<item_id>`
-- `POST /forum/post`
-- `POST /forum/<post_id>/like`
-- `POST /forum/<post_id>/dislike`
-- `POST /forum/<post_id>/comment`
+Default URL: `http://127.0.0.1:5000`
 
-## Comment Email Notification (Flask-Mail)
+## 4. Page Entry Points
 
-This demo supports a checked-in config file:
+- Home: `GET /`
+- Login: `GET /login`
+- Register: `GET /register`
+- Forum: `GET /forum`
+- Marketplace: `GET /marketplace`
 
-- `mail_config.py` (recommended for this project)
+## 5. Main Route Details
 
-Edit these values in `mail_config.py`:
+### 5.1 Forum (database-backed)
 
+- `GET /forum`: render forum page
+- `POST /forum/post`: create a post (supports image upload)
+- `POST /forum/<post_id>/like`: like a post
+- `POST /forum/<post_id>/dislike`: dislike a post
+- `POST /forum/<post_id>/comment`: add a comment
+
+Forum data is stored in SQLite: `data/forum.db`.
+
+### 5.2 Marketplace (in-memory data)
+
+- `GET /marketplace`: marketplace page
+- `GET|POST /post-listing`: create a listing
+- `GET /message-seller/<item_id>`: message seller
+- `GET /market-images/<filename>`: serve marketplace images
+
+Current Marketplace items are defined in `server/routes/marketplace.py` (`items` list) and reset on restart.
+
+## 6. Static Assets and Templates
+
+### 6.1 Flask static mapping
+
+In `server/__init__.py`:
+- `static_folder` points to `src`
+- `static_url_path` is `/static`
+
+So template static references use:
+- `{{ url_for('static', filename='styles/forum.css') }}`
+- `{{ url_for('static', filename='components/navbar.js') }}`
+
+### 6.2 Image storage
+
+- Forum user uploads: saved to `src/uploads/`, served as `/static/uploads/...`
+- Marketplace images: stored in `static/images/`, served via `/market-images/...`
+
+## 7. Email Notifications (Forum Comments)
+
+When someone comments on a post, the app attempts to send an email to the post owner if an email address is provided.
+
+Configuration file: `mail_config.py`
+
+Config keys:
 - `MAIL_SERVER`
 - `MAIL_PORT`
 - `MAIL_USE_TLS`
@@ -72,11 +136,32 @@ Edit these values in `mail_config.py`:
 - `MAIL_PASSWORD`
 - `MAIL_DEFAULT_SENDER`
 
-You can still use environment variables if needed:
+> Note: For this course demo, file-based config is allowed. In production, use environment variables.
 
-- `MAIL_SERVER`
-- `MAIL_PORT` (default `587`)
-- `MAIL_USE_TLS` (`1` or `0`, default `1`)
-- `MAIL_USERNAME`
-- `MAIL_PASSWORD`
-- `MAIL_DEFAULT_SENDER`
+## 8. Development Conventions
+
+- `app.py` is startup entry only.
+- Put Flask routes in `server/routes/`.
+- Put database models in `server/models/`.
+- Put shared logic (e.g., email) in `server/utils/`.
+- Render pages from `templates/`; `src/pages/*` can be kept as static prototypes, not Flask render entry points.
+
+## 9. FAQ
+
+### 9.1 Why does the page not reflect DB changes?
+
+Check:
+- Server restarted
+- You are operating on `data/forum.db`
+- You are visiting Flask routes (not opening local HTML files directly)
+
+### 9.2 Why is an uploaded image not visible?
+
+Check:
+- Form uses `enctype="multipart/form-data"`
+- File is saved in `src/uploads/`
+- Page references `/static/uploads/...`
+
+---
+
+For future extension (real login auth, register persistence, OTP, centralized config), continue building in `server/utils/` and `server/models/`.

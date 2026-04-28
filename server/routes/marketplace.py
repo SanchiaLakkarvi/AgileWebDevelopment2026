@@ -101,6 +101,11 @@ def login():
     return render_template("login.html", page_title="GuildSpace | Login", active_nav="login")
 
 
+@marketplace_bp.get("/register")
+def register():
+    return render_template("register.html", page_title="GuildSpace | Register", active_nav="login")
+
+
 @marketplace_bp.get("/marketplace")
 def marketplace_page():
     return render_template(

@@ -1,14 +1,227 @@
 {% extends "base.html" %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='styles/style.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/homepage.css') }}" />
 {% endblock %}
 
 {% block body %}
 <div data-navbar data-active="{{ active_nav }}"></div>
 
-<section class="simple-page">
-    <h1>Welcome to GuildSpace</h1>
-    <p>A student-only platform for buying, selling, and connecting.</p>
+<header class="hero-section text-white d-flex align-items-center">
+  <div class="container text-center">
+    <h1 class="display-3 fw-bold mb-3">Welcome to GuildSpace</h1>
+    <p class="lead mb-4 hero-text">
+      A student-only UWA community platform for lost property, second-hand trading,
+      and campus interaction.
+    </p>
+    <div class="d-flex justify-content-center gap-3 flex-wrap">
+      <a href="{{ url_for('forum.forum_page') }}" class="btn btn-light btn-lg px-4">Explore Community</a>
+      <a href="{{ url_for('marketplace.login') }}" class="btn btn-outline-light btn-lg px-4">Login / Sign Up</a>
+    </div>
+    <p class="hero-tags mt-4 mb-0">
+      Lost &amp; Found · Marketplace · Forum · UWA Student Community
+    </p>
+  </div>
+</header>
+
+<section class="py-5 about-section">
+  <div class="container">
+    <div class="row align-items-center g-4">
+      <div class="col-lg-6">
+        <h2 class="fw-bold mb-3">Built for UWA students</h2>
+        <p class="text-muted">
+          GuildSpace is a student-only platform where users can post about lost and found items,
+          buy and sell second-hand goods, and connect through a simple community forum.
+        </p>
+        <p class="text-muted mb-0">
+          The platform is intended to be accessible, useful, and relevant for the university community.
+        </p>
+      </div>
+      <div class="col-lg-6">
+        <div class="info-box shadow-sm">
+          <h5 class="fw-bold mb-3">What makes it useful?</h5>
+          <ul class="mb-0">
+            <li>UWA student-focused community</li>
+            <li>Lost &amp; Found support</li>
+            <li>Marketplace for used items</li>
+            <li>Forum-style interaction</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
 </section>
+
+<section class="py-5 bg-light">
+  <div class="container">
+    <div class="text-center mb-5">
+      <h2 class="fw-bold">Main Features</h2>
+      <p class="text-muted">Everything students need in one place</p>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-md-6 col-lg-3">
+        <div class="card feature-card h-100 shadow-sm">
+          <div class="card-body text-center">
+            <h5 class="fw-bold feature-icon">Lost &amp; Found</h5>
+            <p class="text-muted mb-0">
+              Post lost or found items and help students reconnect with their belongings.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-3">
+        <div class="card feature-card h-100 shadow-sm">
+          <div class="card-body text-center">
+            <h5 class="fw-bold feature-icon">Marketplace</h5>
+            <p class="text-muted mb-0">
+              Buy and sell books, electronics, and useful items around campus.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-3">
+        <div class="card feature-card h-100 shadow-sm">
+          <div class="card-body text-center">
+            <h5 class="fw-bold feature-icon">Forum</h5>
+            <p class="text-muted mb-0">
+              Share posts, ask questions, and connect with the student community.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-3">
+        <div class="card feature-card h-100 shadow-sm">
+          <div class="card-body text-center">
+            <h5 class="fw-bold feature-icon">Secure Access</h5>
+            <p class="text-muted mb-0">
+              Access is limited to approved users, helping keep the platform campus-focused.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="py-5 how-section">
+  <div class="container">
+    <div class="text-center mb-5">
+      <h2 class="fw-bold">How It Works</h2>
+      <p class="text-muted">Simple steps to use GuildSpace</p>
+    </div>
+
+    <div class="row g-4 text-center">
+      <div class="col-md-4">
+        <div class="step-box shadow-sm h-100">
+          <div class="step-number">1</div>
+          <h5 class="fw-bold mt-3">Sign Up</h5>
+          <p class="text-muted mb-0">
+            Register using your university account to join the platform.
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="step-box shadow-sm h-100">
+          <div class="step-number">2</div>
+          <h5 class="fw-bold mt-3">Browse or Post</h5>
+          <p class="text-muted mb-0">
+            Explore posts or create your own listing in the relevant section.
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="step-box shadow-sm h-100">
+          <div class="step-number">3</div>
+          <h5 class="fw-bold mt-3">Connect</h5>
+          <p class="text-muted mb-0">
+            Interact with other students and respond to useful posts.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="py-5 bg-light">
+  <div class="container">
+    <div class="text-center mb-5">
+      <h2 class="fw-bold">Community Preview</h2>
+      <p class="text-muted">Example posts from GuildSpace</p>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="card post-card h-100 shadow-sm">
+          <div class="card-body">
+            <span class="badge bg-primary mb-3">Lost &amp; Found</span>
+            <h5 class="fw-bold">Lost AirPods near EZONE</h5>
+            <p class="text-muted mb-0">
+              I lost my AirPods case near EZONE this afternoon. Please contact me if found.
+            </p>
+          </div>
+          <div class="card-footer bg-white border-0 text-muted small">
+            Posted by Student A
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="card post-card h-100 shadow-sm">
+          <div class="card-body">
+            <span class="badge bg-info text-dark mb-3">Marketplace</span>
+            <h5 class="fw-bold">Selling used calculus textbook</h5>
+            <p class="text-muted mb-0">
+              Good condition textbook for first-year students. Pickup on campus.
+            </p>
+          </div>
+          <div class="card-footer bg-white border-0 text-muted small">
+            Posted by Student B
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="card post-card h-100 shadow-sm">
+          <div class="card-body">
+            <span class="badge bg-secondary mb-3">Forum</span>
+            <h5 class="fw-bold">Anyone joining the coding club?</h5>
+            <p class="text-muted mb-0">
+              I am thinking of joining this semester. Would love to hear others' experiences.
+            </p>
+          </div>
+          <div class="card-footer bg-white border-0 text-muted small">
+            Posted by Student C
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-center mt-5">
+      <a href="{{ url_for('forum.forum_page') }}" class="btn btn-primary btn-lg px-4">View Forum</a>
+    </div>
+  </div>
+</section>
+
+<section class="py-5 cta-section text-white text-center">
+  <div class="container">
+    <h2 class="fw-bold mb-3">Start using GuildSpace today</h2>
+    <p class="mb-4">
+      Browse posts, reconnect with lost belongings, and buy or sell items within the UWA community.
+    </p>
+    <a href="{{ url_for('marketplace.login') }}" class="btn btn-light btn-lg px-4">Get Started</a>
+  </div>
+</section>
+
+<footer class="py-4 footer-section text-center">
+  <div class="container">
+    <p class="mb-1 fw-bold">GuildSpace</p>
+    <p class="mb-0 text-muted">Agile Web Development 2026 · UWA Community Platform</p>
+  </div>
+</footer>
 {% endblock %}

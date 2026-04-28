@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/login.css') }}" />
+{% endblock %}
+
+{% block body %}
+<div data-navbar data-active="{{ active_nav }}"></div>
+
+<div class="register-page">
+  <h3 class="text-center mb-4">Register your account</h3>
+  <p id="message" class="text-danger"></p>
+
+  <form id="register" method="get" action="{{ url_for('marketplace.register') }}">
+    <div class="mb-3 row">
+      <label for="first-name" class="form-label">Full Name:</label>
+      <div class="col">
+        <input type="text" id="first-name" placeholder="First name" name="firstName" class="form-control" required />
+      </div>
+      <div class="col">
+        <input type="text" id="last-name" placeholder="Last name" name="lastName" class="form-control" required />
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label for="email" class="form-label">Email ID:</label>
+      <input
+        type="email"
+        id="email"
+        placeholder="Enter your student email id"
+        name="email"
+        class="form-control"
+        required
+        pattern=".+@student\.uwa\.edu\.au"
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="dob" class="form-label">Date of Birth:</label>
+      <input type="date" id="dob" name="dob" class="form-control" required />
+    </div>
+
+    <div class="mb-3">
+      <label for="gender" class="form-label">Gender:</label>
+      <select name="gender" class="form-control" required>
+        <option value="" disabled selected>Select your gender</option>
+        <option>Male</option>
+        <option>Female</option>
+        <option>Others</option>
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label for="password" class="form-label">Password:</label>
+      <input type="password" id="password" placeholder="Create password" name="password" class="form-control" required />
+    </div>
+
+    <div class="mb-3">
+      <label for="confirm-password" class="form-label">Confirm Password:</label>
+      <input type="password" id="confirm-password" placeholder="Re-enter password" name="confirm-password" class="form-control" required />
+    </div>
+
+    <button type="submit" class="btn btn-primary w-100">Create account</button>
+  </form>
+
+  <p class="mt-2">Already registered? <a href="{{ url_for('marketplace.login') }}">Login Now</a></p>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const form = document.getElementById("register");
+  form.addEventListener("submit", function (event) {
+    const password = document.getElementById("password").value;
+    const confirmPassword = document.getElementById("confirm-password").value;
+    if (password !== confirmPassword) {
+      event.preventDefault();
+      document.getElementById("message").textContent = "Passwords do not match!";
+    }
+  });
+</script>
+{% endblock %}

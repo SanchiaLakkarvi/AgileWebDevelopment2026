@@ -6,8 +6,8 @@ from pathlib import Path
 from flask import Flask
 
 from server.extensions import db, mail
-from server.forum.routes import forum_bp
-from server.marketplace.routes import marketplace_bp
+from server.routes.forum import forum_bp
+from server.routes.marketplace import marketplace_bp
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent

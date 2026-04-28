@@ -1,34 +1,82 @@
 # AgileWebDevelopment2026
 
-AgileWebDevelopment2026
+## Minimal Backend Setup (Flask + Jinja)
 
-src/
-│
-├── assets/ # Static resources (images, icons, etc.)
-├── components/ # Reusable UI components
-├── pages/ # Main application pages
-├── server/ # Backend-related files or API logic
-├── styles/ # Global and page-specific stylesheets
+This project is simplified to match the lecture baseline:
+- Flask server
+- Jinja templates for server-side rendering
+- Basic form handling with POST + redirect
+- Forum data persisted in SQLite via SQLAlchemy
+- Marketplace flow handled with in-memory listings
 
-pages/
-├── Forum/ # Forum page
-├── Homepage/ # Homepage
-│ └── homepage.html
-├── Login/ # Login page
-├── Marketplace/ # Marketplace page
+No AJAX API is required in this simplified version.
 
-Each folder inside pages/ represents a separate feature/page of the application.
-• Homepage/: Contains the main landing page (homepage.html)
-• Forum/: Discussion or community-related features
-• Login/: User authentication interface
-• Marketplace/: Buying/selling or listing functionality
+## Project Structure
 
-styles/
-├── forum.css
-├── homepage.css
-├── login.css
-├── marketplace.css
-├── style.css
+- `app.py`: app entry point only
+- `server/`: backend package
+- `server/__init__.py`: app factory and configuration
+- `server/forum/models.py`: forum database models
+- `server/forum/routes.py`: forum routes and handlers
+- `server/marketplace/routes.py`: marketplace routes and handlers
+- `templates/base.html`: shared Jinja layout
+- `templates/forum.html`: forum page (server-rendered posts + forms)
+- `src/styles/`: CSS files
+- `src/components/navbar.js`: reusable navbar component
 
-Each page has its own dedicated CSS file for better separation of concerns.
-• style.css serves as a global stylesheet shared across multiple pages.
+## Run Locally
+
+1. Create and activate a virtual environment
+2. Install dependencies
+3. Start server
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install flask
+pip install flask-sqlalchemy
+pip install flask-mail
+python app.py
+```
+
+Open:
+- `http://127.0.0.1:5000/` (home)
+- `http://127.0.0.1:5000/forum`
+- `http://127.0.0.1:5000/marketplace`
+
+## Main Routes
+
+- `GET /`
+- `GET /forum`
+- `GET /marketplace`
+- `GET/POST /post-listing`
+- `GET /message-seller/<item_id>`
+- `POST /forum/post`
+- `POST /forum/<post_id>/like`
+- `POST /forum/<post_id>/dislike`
+- `POST /forum/<post_id>/comment`
+
+## Comment Email Notification (Flask-Mail)
+
+This demo supports a checked-in config file:
+
+- `mail_config.py` (recommended for this project)
+
+Edit these values in `mail_config.py`:
+
+- `MAIL_SERVER`
+- `MAIL_PORT`
+- `MAIL_USE_TLS`
+- `MAIL_USE_SSL`
+- `MAIL_USERNAME`
+- `MAIL_PASSWORD`
+- `MAIL_DEFAULT_SENDER`
+
+You can still use environment variables if needed:
+
+- `MAIL_SERVER`
+- `MAIL_PORT` (default `587`)
+- `MAIL_USE_TLS` (`1` or `0`, default `1`)
+- `MAIL_USERNAME`
+- `MAIL_PASSWORD`
+- `MAIL_DEFAULT_SENDER`

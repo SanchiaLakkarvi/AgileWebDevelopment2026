@@ -1,8 +1,213 @@
 {% extends "base.html" %}
 
-{% block content %}
-<section class="simple-page">
-    <h1>Forum Page</h1>
-    <p>Students can ask questions, share tips, and connect here.</p>
-</section>
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/forum.css', v='20260421-3col') }}" />
+{% endblock %}
+
+{% block body %}
+<div data-navbar data-active="{{ active_nav }}"></div>
+
+<main class="container py-4">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div class="mb-3">
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }} mb-2" role="alert">{{ message }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% endwith %}
+
+  <section class="card border-0 shadow-sm" aria-label="Forum discovery">
+    <div class="card-body">
+      <header class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3 mb-3">
+        <div>
+          <h1 class="h3 mb-1">Discover Discussions</h1>
+          <p class="text-secondary mb-0">Explore trending student topics in a clean Bootstrap feed.</p>
+        </div>
+        <button type="button" class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#createPostContent"
+          aria-expanded="false" aria-controls="createPostContent">
+          Publish Post
+        </button>
+      </header>
+
+      <div id="createPostContent" class="collapse card border mb-3">
+        <div class="card-body">
+          <form method="post" action="{{ url_for('forum.create_post') }}" class="row g-3" enctype="multipart/form-data">
+            <div class="col-md-6">
+              <label class="form-label" for="authorInput">Your name</label>
+              <input id="authorInput" name="author" class="form-control" type="text" maxlength="40"
+                placeholder="e.g. Esther" required />
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label" for="authorEmailInput">Notification email (optional)</label>
+              <input id="authorEmailInput" name="author_email" class="form-control" type="email"
+                maxlength="120" placeholder="you@example.com" />
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label" for="categoryInput">Category</label>
+              <select id="categoryInput" name="category" class="form-select" required>
+                <option value="">Select one</option>
+                <option value="Study">Study</option>
+                <option value="Events">Events</option>
+                <option value="Life">Life</option>
+                <option value="LostFound">Lost &amp; Found</option>
+              </select>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label" for="titleInput">Title</label>
+              <input id="titleInput" name="title" class="form-control" type="text" maxlength="100"
+                placeholder="What do you want to ask?" required />
+            </div>
+
+            <div class="col-12">
+              <label class="form-label" for="contentInput">Details</label>
+              <textarea id="contentInput" name="content" class="form-control" rows="4" maxlength="500"
+                placeholder="Share context so classmates can help quickly." required></textarea>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label" for="imageFileInput">Photo (optional)</label>
+              <input id="imageFileInput" name="image_file" class="form-control" type="file"
+                accept=".png,.jpg,.jpeg,.webp,.gif" />
+            </div>
+
+            <div class="col-12">
+              <button type="submit" class="btn btn-primary">Publish</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <section aria-label="Search and filters" class="mb-3">
+        <div class="d-flex flex-wrap gap-2 mb-2" id="sortChips" aria-label="Sort posts">
+          <button type="button" class="btn btn-sm rounded-pill btn-primary active" data-sort="latest">Latest</button>
+          <button type="button" class="btn btn-sm rounded-pill btn-outline-secondary"
+            data-sort="popular">Popular</button>
+          <button type="button" class="btn btn-sm rounded-pill btn-outline-secondary" data-sort="oldest">Oldest</button>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2" id="categoryChips" aria-label="Filter by category">
+          <button type="button" class="btn btn-sm rounded-pill btn-primary active" data-category="all">All</button>
+          <button type="button" class="btn btn-sm rounded-pill btn-outline-secondary"
+            data-category="Study">Study</button>
+          <button type="button" class="btn btn-sm rounded-pill btn-outline-secondary"
+            data-category="Events">Events</button>
+          <button type="button" class="btn btn-sm rounded-pill btn-outline-secondary" data-category="Life">Life</button>
+          <button type="button" class="btn btn-sm rounded-pill btn-outline-secondary" data-category="LostFound">Lost
+            &amp; Found</button>
+        </div>
+      </section>
+
+      <section aria-label="Forum posts">
+        {% set ns = namespace(total_comments=0) %}
+        {% for post in posts %}
+        {% set ns.total_comments = ns.total_comments + (post.comments|length) %}
+        {% endfor %}
+
+        <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+          <h2 class="h4 mb-0">Community Feed</h2>
+          <div class="text-secondary" id="forumStats">{{ posts|length }} posts | {{ ns.total_comments }} comments</div>
+        </div>
+
+        <div id="postsContainer" class="posts-masonry">
+          {% if posts %}
+          {% for post in posts %}
+          <div class="post-item" id="post-{{ post.id }}" data-post-id="{{ post.id }}"
+            data-category="{{ post.category }}"
+            data-created-at-ts="{{ post.created_at.timestamp()|int if post.created_at else 0 }}"
+            data-score="{{ (post.likes or 0) - (post.dislikes or 0) }}" data-comments="{{ post.comments|length }}"
+            data-search="{{ (post.title ~ ' ' ~ post.content ~ ' ' ~ post.author ~ ' ' ~ category_label(post.category))|lower }}">
+            <article class="card border-0 shadow-sm">
+              {% if post.image_url %}
+              <img class="card-img-top post-image" src="{{ post.image_url }}" alt="Post image for {{ post.title }}"
+                loading="lazy" />
+              {% endif %}
+
+              <div class="card-body d-flex flex-column">
+                <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                  <div class="d-flex align-items-center gap-2 flex-grow-1">
+                    <div
+                      class="post-avatar rounded-circle bg-primary-subtle text-primary fw-bold d-flex align-items-center justify-content-center"
+                      aria-hidden="true">{{ post.author[0]|upper if post.author else '?' }}</div>
+                    <div>
+                      <div class="fw-semibold small text-truncate">{{ post.author }}</div>
+                      <div class="small text-secondary">{{ relative_time(post.created_at) }}</div>
+                    </div>
+                  </div>
+                  <span class="badge rounded-pill text-bg-light border">{{ category_label(post.category) }}</span>
+                </div>
+
+                <h3 class="h5 mb-2">{{ post.title }}</h3>
+                <p class="text-secondary post-content mb-3">{{ post.content }}</p>
+
+                <div class="row g-2 mt-auto">
+                  <div class="col-4 d-grid">
+                    <form method="post" action="{{ url_for('forum.like_post', post_id=post.id) }}">
+                      <button type="submit" class="btn btn-sm btn-outline-success w-100">
+                        <i class="bi bi-heart"></i> {{ post.likes }}
+                      </button>
+                    </form>
+                  </div>
+
+                  <div class="col-4 d-grid">
+                    <form method="post" action="{{ url_for('forum.dislike_post', post_id=post.id) }}">
+                      <button type="submit" class="btn btn-sm btn-outline-danger w-100"><i class="bi bi-heartbreak"></i>
+                        {{ post.dislikes }}</button>
+                    </form>
+                  </div>
+
+                  <div class="col-4 d-grid">
+                    <button type="button" class="btn btn-sm btn-outline-primary w-100" data-action="toggle-comments"
+                      data-post-id="{{ post.id }}" aria-expanded="false">
+                      <i class="bi bi-chat-dots"></i> {{ post.comments|length }}
+                    </button>
+                  </div>
+                </div>
+
+                <div class="mt-3 pt-3 border-top" id="comments-{{ post.id }}" hidden>
+                  <ul class="list-group list-group-flush mb-3">
+                    {% if post.comments %}
+                    {% for comment in post.comments %}
+                    <li class="list-group-item px-0">
+                      <div class="small text-secondary mb-1">{{ comment.author }} | {{ relative_time(comment.created_at)
+                        }}</div>
+                      <p class="mb-0">{{ comment.text }}</p>
+                    </li>
+                    {% endfor %}
+                    {% else %}
+                    <li class="list-group-item px-0">
+                      <div class="small text-secondary mb-1">No comments yet</div>
+                      <p class="mb-0">Be the first to add a helpful reply.</p>
+                    </li>
+                    {% endif %}
+                  </ul>
+
+                  <form method="post" action="{{ url_for('forum.add_comment', post_id=post.id) }}">
+                    <div class="input-group input-group-sm">
+                      <input class="form-control" name="text" type="text" maxlength="240"
+                        placeholder="Write a comment..." required />
+                      <button type="submit" class="btn btn-primary">Comment</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </article>
+          </div>
+          {% endfor %}
+          {% else %}
+          <div class="alert alert-light border text-secondary mb-0">No posts yet. Be the first to publish.</div>
+          {% endif %}
+        </div>
+      </section>
+    </div>
+  </section>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='pages/Forum/forum.js') }}" defer></script>
 {% endblock %}

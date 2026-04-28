@@ -26,3 +26,12 @@ body {
   color: #ffffff;
   background: rgba(255, 255, 255, 0.2);
 }
+
+.login-page, .register-page {
+    max-width: 400px;
+    margin: 80px auto;
+    background-color: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}

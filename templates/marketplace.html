@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='styles/style.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/marketplace.css') }}" />
 {% endblock %}
 
 {% block body %}
@@ -37,7 +37,8 @@
         <div class="market-grid">
             {% for item in items %}
             <div class="market-card">
-                <img src="{{ url_for('marketplace.market_image', filename=item.image) }}" alt="{{ item.title }}" class="market-image">
+                <img src="{{ url_for('marketplace.market_image', filename=item.image) }}" alt="{{ item.title }}"
+                    class="market-image">
 
                 <div class="market-card-body">
                     <div class="seller-row">
@@ -57,8 +58,10 @@
                     </div>
 
                     <div class="market-actions">
-                        <a href="{{ url_for('marketplace.message_seller', item_id=item.id) }}" class="message-btn">Message Seller</a>
-                        <a href="{{ url_for('marketplace.message_seller', item_id=item.id) }}" class="bid-btn">Place Bid</a>
+                        <a href="{{ url_for('marketplace.message_seller', item_id=item.id) }}"
+                            class="message-btn">Message Seller</a>
+                        <a href="{{ url_for('marketplace.message_seller', item_id=item.id) }}" class="bid-btn">Place
+                            Bid</a>
                     </div>
                 </div>
             </div>

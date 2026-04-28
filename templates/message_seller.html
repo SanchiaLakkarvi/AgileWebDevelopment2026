@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='styles/style.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/marketplace.css') }}" />
 {% endblock %}
 
 {% block body %}
@@ -10,24 +10,24 @@
 <section class="page-shell">
     <div class="marketplace-wrapper">
         {% if item %}
-            <h1>Message Seller</h1>
-            <p>You are contacting <strong>{{ item.seller }}</strong> about <strong>{{ item.title }}</strong>.</p>
+        <h1>Message Seller</h1>
+        <p>You are contacting <strong>{{ item.seller }}</strong> about <strong>{{ item.title }}</strong>.</p>
 
-            <form class="listing-form">
-                <label for="name">Your Name</label>
-                <input type="text" id="name" placeholder="Enter your name">
+        <form class="listing-form">
+            <label for="name">Your Name</label>
+            <input type="text" id="name" placeholder="Enter your name">
 
-                <label for="email">Your Email</label>
-                <input type="email" id="email" placeholder="Enter your email">
+            <label for="email">Your Email</label>
+            <input type="email" id="email" placeholder="Enter your email">
 
-                <label for="message">Message</label>
-                <textarea id="message" rows="5" placeholder="Write your message here"></textarea>
+            <label for="message">Message</label>
+            <textarea id="message" rows="5" placeholder="Write your message here"></textarea>
 
-                <button type="button" class="publish-btn">Send Message</button>
-            </form>
+            <button type="button" class="publish-btn">Send Message</button>
+        </form>
         {% else %}
-            <h1>Item Not Found</h1>
-            <p>The selected listing could not be found.</p>
+        <h1>Item Not Found</h1>
+        <p>The selected listing could not be found.</p>
         {% endif %}
     </div>
 </section>

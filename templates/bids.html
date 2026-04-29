@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-shell">
+    <div class="marketplace-wrapper">
+        <div class="marketplace-header">
+            <div>
+                <p class="eyebrow">Bid Centre</p>
+                <h1>My Listing Bids</h1>
+                <p>Only bids received for your own listings are shown here.</p>
+            </div>
+            <a href="{{ url_for('marketplace') }}" class="secondary-btn">Back to Marketplace</a>
+        </div>
+
+        {% if bids %}
+            <div class="bid-list">
+            {% for bid in bids %}
+                <div class="bid-card">
+                    <div>
+                        <h3>{{ bid.item_title }}</h3>
+                        <p><strong>Buyer:</strong> {{ bid.buyer_name }} · {{ bid.buyer_email }}</p>
+                        <span class="small-muted">{{ bid.time }}</span>
+                    </div>
+                    <div class="bid-amount">${{ bid.bid_amount }}</div>
+                </div>
+            {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state"><h3>No bids yet</h3><p>Bids for your own listings will appear here.</p></div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

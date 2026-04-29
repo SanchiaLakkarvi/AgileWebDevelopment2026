@@ -1,33 +1,32 @@
 {% extends "base.html" %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='styles/marketplace.css') }}" />
-{% endblock %}
-
-{% block body %}
-<div data-navbar data-active="{{ active_nav }}"></div>
-
-<section class="page-shell">
-    <div class="marketplace-wrapper">
+{% block content %}
+<section class="page-shell narrow-page">
+    <div class="marketplace-wrapper form-wrapper">
         {% if item %}
-        <h1>Message Seller</h1>
-        <p>You are contacting <strong>{{ item.seller }}</strong> about <strong>{{ item.title }}</strong>.</p>
+            <div class="form-heading">
+                <p class="eyebrow">Private Message</p>
+                <h1>Message Seller</h1>
+                <p>You are contacting <strong>{{ item.seller }}</strong> about <strong>{{ item.title }}</strong>.</p>
+            </div>
 
-        <form class="listing-form">
-            <label for="name">Your Name</label>
-            <input type="text" id="name" placeholder="Enter your name">
+            <form method="POST" class="listing-form">
+                <label>Your Name</label>
+                <input type="text" name="name" placeholder="Enter your name" required>
 
-            <label for="email">Your Email</label>
-            <input type="email" id="email" placeholder="Enter your email">
+                <label>Your Email</label>
+                <input type="email" name="email" placeholder="Enter your email" required>
 
-            <label for="message">Message</label>
-            <textarea id="message" rows="5" placeholder="Write your message here"></textarea>
+                <label>Message</label>
+                <textarea name="message" rows="5" placeholder="Hi, is this still available?" required></textarea>
 
-            <button type="button" class="publish-btn">Send Message</button>
-        </form>
+                <div class="form-actions">
+                    <a href="{{ url_for('marketplace') }}" class="secondary-btn">Back</a>
+                    <button type="submit" class="publish-btn">Send Message</button>
+                </div>
+            </form>
         {% else %}
-        <h1>Item Not Found</h1>
-        <p>The selected listing could not be found.</p>
+            <div class="empty-state"><h1>Item Not Found</h1><p>The selected listing could not be found.</p></div>
         {% endif %}
     </div>
 </section>

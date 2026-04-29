@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-shell">
+    <div class="marketplace-wrapper">
+        <div class="marketplace-header">
+            <div>
+                <p class="eyebrow">Inbox</p>
+                <h1>Messages Received</h1>
+                <p>Messages from students interested in your listings.</p>
+            </div>
+            <a href="{{ url_for('marketplace') }}" class="secondary-btn">Back to Marketplace</a>
+        </div>
+
+        {% if messages %}
+            <div class="inbox-list">
+            {% for msg in messages %}
+                <div class="inbox-card">
+                    <div class="inbox-avatar">{{ msg.buyer_name[0] }}</div>
+                    <div class="inbox-content">
+                        <div class="inbox-topline">
+                            <h3>{{ msg.item_title }}</h3>
+                            <span>{{ msg.time }}</span>
+                        </div>
+                        <p><strong>From:</strong> {{ msg.buyer_name }} · {{ msg.buyer_email }}</p>
+                        <p><strong>Seller:</strong> {{ msg.seller }}</p>
+                        <div class="message-box">{{ msg.message }}</div>
+                    </div>
+                </div>
+            {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state"><h3>No messages yet</h3><p>New messages will appear here and show as a badge in the navbar.</p></div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

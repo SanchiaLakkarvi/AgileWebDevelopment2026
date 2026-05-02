@@ -149,6 +149,10 @@ def inject_common_data():
 
 
 @app.route("/")
+def index():
+    return redirect(url_for("login"))
+
+@app.route("/home")
 def home():
     return render_template("home.html")
 
@@ -161,6 +165,10 @@ def forum():
 @app.route("/login")
 def login():
     return render_template("login.html")
+
+@app.route("/register")
+def register():
+    return render_template("register.html")
 
 
 @app.route("/marketplace")

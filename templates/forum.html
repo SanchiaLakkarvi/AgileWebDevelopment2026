@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='styles/forum.css', v='20260421-3col') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/forum.css') }}" />
 {% endblock %}
 
-{% block body %}
+{% block content %}
 <div data-navbar data-active="{{ active_nav }}"></div>
 
 <main class="container py-4">
@@ -42,8 +42,8 @@
 
             <div class="col-md-6">
               <label class="form-label" for="authorEmailInput">Notification email (optional)</label>
-              <input id="authorEmailInput" name="author_email" class="form-control" type="email"
-                maxlength="120" placeholder="you@example.com" />
+              <input id="authorEmailInput" name="author_email" class="form-control" type="email" maxlength="120"
+                placeholder="you@example.com" />
             </div>
 
             <div class="col-md-6">

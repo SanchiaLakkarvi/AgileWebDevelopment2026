@@ -1,10 +1,25 @@
 import os
 from datetime import datetime
+from pathlib import Path
 from werkzeug.utils import secure_filename
 from flask import Flask, render_template, request, redirect, url_for, flash
+from server.extensions import db
+from server.models.user import User
 
 app = Flask(__name__)
 app.secret_key = "guildspace-dev-secret"
+
+BASE_DIR = Path(__file__).resolve().parent
+DATA_DIR = BASE_DIR / "data"
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DATA_DIR / 'forum.db'}"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+db.init_app(app)
+
+with app.app_context():
+    db.create_all()
 
 UPLOAD_FOLDER = os.path.join(app.root_path, "static", "images", "uploads")
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
@@ -162,12 +177,69 @@ def forum():
     return render_template("forum.html")
 
 
-@app.route("/login")
+@app.route("/login", methods=["GET", "POST"])
 def login():
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
+
+        user = User.query.filter_by(email=email).first()
+
+        if not user or not user.check_password(password):
+            flash("Invalid email or password.")
+            return redirect(url_for("login"))
+
+        
+        return redirect(url_for("home"))
     return render_template("login.html")
 
-@app.route("/register")
+@app.route("/register", methods=["GET", "POST"])
 def register():
+    if request.method == "POST":
+        first_name = request.form.get("firstName", "").strip()
+        last_name = request.form.get("lastName", "").strip()
+        email = request.form.get("email", "").strip().lower()
+        dob = request.form.get("dob", "").strip()
+        gender = request.form.get("gender", "").strip()
+        password = request.form.get("password", "")
+        confirm_password = request.form.get("confirm-password", "")
+
+        if not first_name or not last_name or not email or not dob or not gender or not password:
+            flash("Please fill all required fields.")
+            return redirect(url_for("register"))
+
+        if not email.endswith("@student.uwa.edu.au"):
+            flash("Please use your UWA student email.")
+            return redirect(url_for("register"))
+
+        if password != confirm_password:
+            flash("Passwords do not match.")
+            return redirect(url_for("register"))
+
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
+            flash("This email is already registered. Please login.")
+            return redirect(url_for("login"))
+
+        user = User(
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            dob=dob,
+            gender=gender,
+            is_verified=False,
+            otp_number=None,
+            otp_generation_time=None,
+        )
+
+        user.set_password(password)
+
+        db.session.add(user)
+        db.session.commit()
+
+        flash("Account created successfully. You can now login.")
+        return redirect(url_for("login"))
+
     return render_template("register.html")
 
 

@@ -10,7 +10,7 @@
 <div class="register-page">
     <h3 class="text-center mb-4">Register your account</h3>
     <p id="message"></p>
-    <form id="register">
+    <form id="register" method="POST" action="{{ url_for('register') }}">
         <div class="mb-3 row">
             <label for="name" class="form-label">Full Name:</label>
             <div class="col">

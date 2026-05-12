@@ -2,7 +2,7 @@ import os
 from datetime import datetime
 from pathlib import Path
 from werkzeug.utils import secure_filename
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 from server.extensions import db
 from server.models.user import User
 
@@ -149,12 +149,17 @@ def get_item(item_id):
 def is_owner(item):
     return item and item.get("seller") == CURRENT_USER
 
+def logged_in():
+    return "user_id" in session
+
 
 @app.context_processor
 def inject_common_data():
     unread_count = len([message for message in messages if message.get("seller") == CURRENT_USER and not message.get("read")])
     own_bid_count = len([bid for bid in bids if bid.get("seller") == CURRENT_USER])
     return {
+        "logged_in": "user_id" in session,
+        "logged_in_user": session.get("user_name"),
         "unread_count": unread_count,
         "own_bid_count": own_bid_count,
         "categories": CATEGORIES,
@@ -169,11 +174,17 @@ def index():
 
 @app.route("/home")
 def home():
+    if not logged_in():
+        flash("Please login first.")
+        return redirect(url_for("login"))
     return render_template("home.html")
 
 
 @app.route("/forum")
 def forum():
+    if not logged_in():
+        flash("Please login first.")
+        return redirect(url_for("login"))
     return render_template("forum.html")
 
 
@@ -188,10 +199,15 @@ def login():
         if not user or not user.check_password(password):
             flash("Invalid email or password.")
             return redirect(url_for("login"))
+        
+        # This will keep the login session until we logout
+        session["user_id"] = user.id
+        session["user_name"] = user.full_name
+        session["user_email"] = user.email
 
         
         return redirect(url_for("home"))
-    return render_template("login.html")
+    return render_template("login.html", active_nav="login")
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -240,11 +256,14 @@ def register():
         flash("Account created successfully. You can now login.")
         return redirect(url_for("login"))
 
-    return render_template("register.html")
+    return render_template("register.html", active_nav="register")
 
 
 @app.route("/marketplace")
 def marketplace():
+    if not logged_in():
+        flash("Please login first.")
+        return redirect(url_for("login"))
     selected_category = request.args.get("category", "All")
     search_query = request.args.get("q", "").strip().lower()
 
@@ -272,6 +291,9 @@ def marketplace():
 
 @app.route("/post-listing", methods=["GET", "POST"])
 def post_listing():
+    if not logged_in():
+        flash("Please login first.")
+        return redirect(url_for("login"))
     if request.method == "POST":
         image_file = request.files.get("image")
         image_name = "placeholder-other.svg"
@@ -311,6 +333,9 @@ def post_listing():
 
 @app.route("/message-seller/<int:item_id>", methods=["GET", "POST"])
 def message_seller(item_id):
+    if not logged_in():
+        flash("Please login first.")
+        return redirect(url_for("login"))
     selected_item = get_item(item_id)
 
     if not selected_item:
@@ -345,6 +370,9 @@ def message_seller(item_id):
 
 @app.route("/bid/<int:item_id>", methods=["POST"])
 def place_bid(item_id):
+    if not logged_in():
+        flash("Please login first.")
+        return redirect(url_for("login"))
     selected_item = get_item(item_id)
 
     if not selected_item:
@@ -375,6 +403,9 @@ def place_bid(item_id):
 
 @app.route("/listing/<int:item_id>/status", methods=["POST"])
 def update_listing_status(item_id):
+    if not logged_in():
+        flash("Please login first.")
+        return redirect(url_for("login"))
     selected_item = get_item(item_id)
 
     if not selected_item:
@@ -397,6 +428,9 @@ def update_listing_status(item_id):
 
 @app.route("/messages")
 def view_messages():
+    if not logged_in():
+        flash("Please login first.")
+        return redirect(url_for("login"))
     own_messages = [message for message in messages if message.get("seller") == CURRENT_USER]
     for message in own_messages:
         message["read"] = True
@@ -405,8 +439,20 @@ def view_messages():
 
 @app.route("/bids")
 def view_bids():
+    if not logged_in():
+        flash("Please login first.")
+        return redirect(url_for("login"))
     own_bids = [bid for bid in bids if bid.get("seller") == CURRENT_USER]
     return render_template("bids.html", bids=own_bids)
+
+@app.route("/logout")
+def logout():
+    if not logged_in():
+        flash("Please login first.")
+        return redirect(url_for("login"))
+    session.clear()
+    flash("Logged out successfully.")
+    return redirect(url_for("login"))
 
 
 if __name__ == "__main__":

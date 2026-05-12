@@ -7,7 +7,7 @@
 {% block content %}
 <div data-navbar data-active="{{ active_nav }}"></div>
 
-<header class="hero-section text-white d-flex align-items-center">
+<header class="hero-section d-flex align-items-center">
   <div class="container text-center">
     <h1 class="display-3 fw-bold mb-3">Welcome to GuildSpace</h1>
     <p class="lead mb-4 hero-text">
@@ -16,7 +16,6 @@
     </p>
     <div class="d-flex justify-content-center gap-3 flex-wrap">
       <a href="{{ url_for('forum') }}" class="btn btn-light btn-lg px-4">Explore Community</a>
-      <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg px-4">Login / Sign Up</a>
     </div>
     <p class="hero-tags mt-4 mb-0">
       Lost &amp; Found · Marketplace · Forum · UWA Student Community
@@ -208,7 +207,7 @@
   </div>
 </section>
 
-<section class="py-5 cta-section text-white text-center">
+<section class="py-5 cta-section text-center">
   <div class="container">
     <h2 class="fw-bold mb-3">Start using GuildSpace today</h2>
     <p class="mb-4">

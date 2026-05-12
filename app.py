@@ -1,9 +1,10 @@
-import os
+import os, random
+from flask_mail import Message
 from datetime import datetime
 from pathlib import Path
 from werkzeug.utils import secure_filename
 from flask import Flask, render_template, request, redirect, url_for, flash, session
-from server.extensions import db
+from server.extensions import db, mail
 from server.models.user import User
 
 app = Flask(__name__)
@@ -16,7 +17,18 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DATA_DIR / 'forum.db'}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
+app.config["MAIL_SERVER"] = "smtp.gmail.com"
+app.config["MAIL_PORT"] = 587
+app.config["MAIL_USE_TLS"] = True
+app.config["MAIL_USE_SSL"] = False
+app.config["MAIL_USERNAME"] = ""
+app.config["MAIL_PASSWORD"] = ""
+app.config["MAIL_DEFAULT_SENDER"] = ""
+
+app.config.from_pyfile("mail_config.py", silent=True)
+
 db.init_app(app)
+mail.init_app(app)
 
 with app.app_context():
     db.create_all()
@@ -152,6 +164,12 @@ def is_owner(item):
 def logged_in():
     return "user_id" in session
 
+def create_otp():
+    return str(random.randint(100000,999999))
+
+def send_otp(email, otp):
+    message=Message(subject="OTP for verification", recipients=[email], body="Your one time password (OTP) to login to your GuildSpace account securely is:" + otp)
+    mail.send(message)
 
 @app.context_processor
 def inject_common_data():
@@ -236,6 +254,8 @@ def register():
         if existing_user:
             flash("This email is already registered. Please login.")
             return redirect(url_for("login"))
+        
+        otp = create_otp()
 
         user = User(
             first_name=first_name,
@@ -244,8 +264,8 @@ def register():
             dob=dob,
             gender=gender,
             is_verified=False,
-            otp_number=None,
-            otp_generation_time=None,
+            otp_number=otp,
+            otp_generation_time=datetime.now(),
         )
 
         user.set_password(password)
@@ -253,10 +273,37 @@ def register():
         db.session.add(user)
         db.session.commit()
 
-        flash("Account created successfully. You can now login.")
-        return redirect(url_for("login"))
+        send_otp(email, otp)
+
+        flash("Account created successfully. Please check your email for OTP.")
+        return redirect(url_for("otp_verification", email=email))
 
     return render_template("register.html", active_nav="register")
+
+@app.route("/verify-otp", methods=["GET", "POST"])
+def otp_verification():
+    email = request.args.get("email", "").strip().lower()
+
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        entered_otp = request.form.get("otp", "").strip()
+
+        user = User.query.filter_by(email=email).first()
+
+        if not user or user.otp_number != entered_otp:
+            flash("Invalid OTP. Please try again.")
+            return redirect(url_for("otp_verification", email=email))
+
+        user.is_verified = True
+        user.otp_number = None
+        user.otp_generation_time = None
+
+        db.session.commit()
+
+        flash("Email verified successfully. You can now login.")
+        return redirect(url_for("login"))
+
+    return render_template("otp_verification.html", email=email)
 
 
 @app.route("/marketplace")

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+{% endblock %}
+
+{% block content %}
+<div data-navbar data-active="{{ active_nav }}"></div>
+
+<div class="register-page container w-50 mx-auto mt-4">
+    <h3 class="text-center mb-4">Verify your email</h3>
+
+    <p class="text-center">
+        We have sent a 6-digit OTP to your entered student email.
+    </p>
+
+    <form id="otp-page" method="POST" action="{{ url_for('otp_verification') }}">
+        <input type="hidden" name="email" value="{{ email }}">
+
+        <div class="mb-3">
+            <label for="otp" class="form-label">Enter OTP:</label>
+            <input type="text" id="otp" name="otp" placeholder="Enter 6-digit OTP" class="form-control" maxlength="6" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100">Submit OTP</button>
+    </form>
+
+    <p class="mt-2">
+        Already verified? <a href="{{ url_for('login') }}">Login Now</a>
+    </p>
+</div>
+
+{% endblock %}

@@ -2,8 +2,9 @@ import os, random
 from flask_mail import Message
 from datetime import datetime
 from pathlib import Path
+import secrets
 from werkzeug.utils import secure_filename
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, abort
 from server.extensions import db, mail
 from server.models.user import User
 
@@ -169,7 +170,12 @@ def create_otp():
 
 def send_otp(email, otp):
     message=Message(subject="OTP for verification", recipients=[email], body="Your one time password (OTP) to login to your GuildSpace account securely is:" + otp)
-    mail.send(message)
+    return mail.send(message)
+
+def create_csrf_token():
+    if "csrf_token" not in session:
+        session["csrf_token"]=secrets.token_hex(16)
+    return session["csrf_token"]
 
 @app.context_processor
 def inject_common_data():
@@ -183,8 +189,17 @@ def inject_common_data():
         "categories": CATEGORIES,
         "statuses": STATUSES,
         "current_user": CURRENT_USER,
+        "csrf_token": create_csrf_token,
     }
 
+@app.before_request
+def check_csrf_token():
+    if request.method == "POST":
+        form_token = request.form.get("csrf_token")
+        session_token = session.get("csrf_token")
+
+        if not form_token or form_token != session_token:
+            abort(403)
 
 @app.route("/")
 def index():
@@ -217,6 +232,10 @@ def login():
         if not user or not user.check_password(password):
             flash("Invalid email or password.")
             return redirect(url_for("login"))
+        
+        if not user.is_verified:
+            flash("Account not verified, please verify before logging in.")
+            return redirect(url_for("otp_verification", email=user.email))
         
         # This will keep the login session until we logout
         session["user_id"] = user.id
@@ -251,10 +270,29 @@ def register():
             return redirect(url_for("register"))
 
         existing_user = User.query.filter_by(email=email).first()
-        if existing_user:
+        if existing_user and existing_user.is_verified:
             flash("This email is already registered. Please login.")
             return redirect(url_for("login"))
         
+        if existing_user and not existing_user.is_verified:
+            otp = create_otp()
+
+            existing_user.first_name = first_name
+            existing_user.last_name = last_name
+            existing_user.dob = dob
+            existing_user.gender = gender
+            existing_user.otp_number = otp
+            existing_user.otp_generation_time = datetime.now()
+            existing_user.set_password(password)
+
+            db.session.commit()
+
+            send_otp(email, otp)
+
+            flash("Account already registered but not verified. A new OTP has been sent to your email, please verify!")
+            return redirect(url_for("otp_verification", email=email))
+
+
         otp = create_otp()
 
         user = User(

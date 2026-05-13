@@ -45,6 +45,8 @@ CURRENT_USER = "Sanchia"
 CATEGORIES = ["Books", "Electronics", "Furniture", "Accommodation", "Accessories", "Food", "Other"]
 STATUSES = ["Active", "Pending", "Sold"]
 
+posts = []
+
 items = [
     {
         "id": 1,
@@ -219,6 +221,69 @@ def forum():
         flash("Please login first.")
         return redirect(url_for("login"))
     return render_template("forum.html")
+    return render_template("forum.html", posts=posts, active_nav="forum")
+
+@app.route("/forum/post", methods=["POST"])
+def create_post():
+    new_post = {
+        "id": len(posts) + 1,
+        "author": request.form.get("author", "Anonymous"),
+        "author_email": request.form.get("author_email", ""),
+        "title": request.form.get("title", ""),
+        "content": request.form.get("content", ""),
+        "category": request.form.get("category", "Study"),
+        "image_url": "",
+        "created_at": datetime.utcnow(),
+        "likes": 0,
+        "dislikes": 0,
+        "comments": []
+    }
+    posts.insert(0, new_post)
+    flash("Post published.")
+    return redirect(url_for("forum"))
+
+
+@app.route("/forum/<int:post_id>/like", methods=["POST"])
+def like_post(post_id):
+    post = next((p for p in posts if p["id"] == post_id), None)
+    if post:
+        post["likes"] += 1
+    return redirect(url_for("forum"))
+
+@app.context_processor
+def inject_forum_helpers():
+    def category_label(category):
+        return "Lost & Found" if category == "LostFound" else category
+
+    def relative_time(value):
+        return "just now"
+
+    return {
+        "category_label": category_label,
+        "relative_time": relative_time
+    }
+
+
+@app.route("/forum/<int:post_id>/dislike", methods=["POST"])
+def dislike_post(post_id):
+    post = next((p for p in posts if p["id"] == post_id), None)
+    if post:
+        post["dislikes"] += 1
+    return redirect(url_for("forum"))
+
+
+@app.route("/forum/<int:post_id>/comment", methods=["POST"])
+def add_comment(post_id):
+    post = next((p for p in posts if p["id"] == post_id), None)
+    if post:
+        comment = {
+            "author": "You",
+            "text": request.form.get("text", ""),
+            "created_at": datetime.utcnow()
+        }
+        post["comments"].append(comment)
+        flash("Comment added.")
+    return redirect(url_for("forum"))
 
 
 @app.route("/login", methods=["GET", "POST"])

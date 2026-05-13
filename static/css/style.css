@@ -561,3 +561,91 @@ body {
         width: 100%;
     }
 }
+body {
+  background-color: #f8fbff;
+  color: #1f2937;
+}
+
+.hero-section {
+  min-height: 85vh;
+  display: flex;
+  align-items: center;
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.35)),
+    url("../images/uwa-campus.jpg") center/cover no-repeat;
+}
+
+.hero-tags {
+  font-size: 1rem;
+  letter-spacing: 0.5px;
+  opacity: 0.95;
+}
+
+.feature-icon {
+  font-size: 1.15rem;
+}
+
+.hero-text,
+.hero-section h1 {
+  max-width: 850px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.about-section {
+  background-color: #f8fbff;
+}
+
+.info-box {
+  background-color: #ffffff;
+  border-radius: 14px;
+  padding: 2rem;
+  border-left: 5px solid #2563eb;
+}
+
+.feature-card {
+  border: none;
+  border-radius: 14px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.15);
+}
+
+.how-section {
+  background-color: #f8fbff;
+}
+
+.step-box {
+  background-color: #ffffff;
+  border-radius: 14px;
+  padding: 2rem 1.5rem;
+}
+
+.step-number {
+  width: 52px;
+  height: 52px;
+  line-height: 52px;
+  margin: 0 auto;
+  border-radius: 50%;
+  background-color: #2563eb;
+  color: white;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.post-card {
+  border: none;
+  border-radius: 14px;
+}
+
+.cta-section {
+  background: linear-gradient(90deg, #1d4ed8, #2563eb);
+}
+
+.footer-section {
+  background-color: #ffffff;
+  border-top: 1px solid #dbeafe;
+}

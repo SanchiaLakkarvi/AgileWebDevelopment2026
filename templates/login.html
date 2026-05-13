@@ -1,17 +1,18 @@
 {% extends "base.html" %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='styles/login.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
 {% endblock %}
 
 {% block content %}
 <div data-navbar data-active="{{ active_nav }}"></div>
 
-<div class="login-page">
+<div class="login-page ">
   <h3 class="text-center mb-4">Welcome back</h3>
   <p id="message"></p>
 
-  <form id="login" method="POST" action="/login">
+  <form id="login" method="POST" action="{{ url_for('login') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="mb-3">
       <label for="email" class="form-label">Email ID:</label>
       <input type="email" id="email" placeholder="Enter your student email id" name="email" class="form-control" required>

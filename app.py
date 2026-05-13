@@ -1,10 +1,38 @@
-import os
+import os, random
+from flask_mail import Message
 from datetime import datetime
+from pathlib import Path
+import secrets
 from werkzeug.utils import secure_filename
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, session, abort
+from server.extensions import db, mail
+from server.models.user import User
 
 app = Flask(__name__)
 app.secret_key = "guildspace-dev-secret"
+
+BASE_DIR = Path(__file__).resolve().parent
+DATA_DIR = BASE_DIR / "data"
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DATA_DIR / 'forum.db'}"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+app.config["MAIL_SERVER"] = "smtp.gmail.com"
+app.config["MAIL_PORT"] = 587
+app.config["MAIL_USE_TLS"] = True
+app.config["MAIL_USE_SSL"] = False
+app.config["MAIL_USERNAME"] = ""
+app.config["MAIL_PASSWORD"] = ""
+app.config["MAIL_DEFAULT_SENDER"] = ""
+
+app.config.from_pyfile("mail_config.py", silent=True)
+
+db.init_app(app)
+mail.init_app(app)
+
+with app.app_context():
+    db.create_all()
 
 UPLOAD_FOLDER = os.path.join(app.root_path, "static", "images", "uploads")
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
@@ -136,19 +164,44 @@ def get_item(item_id):
 def is_owner(item):
     return item and item.get("seller") == CURRENT_USER
 
+def logged_in():
+    return "user_id" in session
+
+def create_otp():
+    return str(random.randint(100000,999999))
+
+def send_otp(email, otp):
+    message=Message(subject="OTP for verification", recipients=[email], body="Your one time password (OTP) to login to your GuildSpace account securely is:" + otp)
+    return mail.send(message)
+
+def create_csrf_token():
+    if "csrf_token" not in session:
+        session["csrf_token"]=secrets.token_hex(16)
+    return session["csrf_token"]
 
 @app.context_processor
 def inject_common_data():
     unread_count = len([message for message in messages if message.get("seller") == CURRENT_USER and not message.get("read")])
     own_bid_count = len([bid for bid in bids if bid.get("seller") == CURRENT_USER])
     return {
+        "logged_in": "user_id" in session,
+        "logged_in_user": session.get("user_name"),
         "unread_count": unread_count,
         "own_bid_count": own_bid_count,
         "categories": CATEGORIES,
         "statuses": STATUSES,
         "current_user": CURRENT_USER,
+        "csrf_token": create_csrf_token,
     }
 
+@app.before_request
+def check_csrf_token():
+    if request.method == "POST":
+        form_token = request.form.get("csrf_token")
+        session_token = session.get("csrf_token")
+
+        if not form_token or form_token != session_token:
+            abort(403)
 
 @app.route("/")
 def index():
@@ -156,11 +209,18 @@ def index():
 
 @app.route("/home")
 def home():
+    if not logged_in():
+        flash("Please login first.")
+        return redirect(url_for("login"))
     return render_template("home.html")
 
 
 @app.route("/forum")
 def forum():
+    if not logged_in():
+        flash("Please login first.")
+        return redirect(url_for("login"))
+    return render_template("forum.html")
     return render_template("forum.html", posts=posts, active_nav="forum")
 
 @app.route("/forum/post", methods=["POST"])
@@ -226,17 +286,134 @@ def add_comment(post_id):
     return redirect(url_for("forum"))
 
 
-@app.route("/login")
+@app.route("/login", methods=["GET", "POST"])
 def login():
-    return render_template("login.html")
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
 
-@app.route("/register")
+        user = User.query.filter_by(email=email).first()
+
+        if not user or not user.check_password(password):
+            flash("Invalid email or password.")
+            return redirect(url_for("login"))
+        
+        if not user.is_verified:
+            flash("Account not verified, please verify before logging in.")
+            return redirect(url_for("otp_verification", email=user.email))
+        
+        # This will keep the login session until we logout
+        session["user_id"] = user.id
+        session["user_name"] = user.full_name
+        session["user_email"] = user.email
+
+        
+        return redirect(url_for("home"))
+    return render_template("login.html", active_nav="login")
+
+@app.route("/register", methods=["GET", "POST"])
 def register():
-    return render_template("register.html")
+    if request.method == "POST":
+        first_name = request.form.get("firstName", "").strip()
+        last_name = request.form.get("lastName", "").strip()
+        email = request.form.get("email", "").strip().lower()
+        dob = request.form.get("dob", "").strip()
+        gender = request.form.get("gender", "").strip()
+        password = request.form.get("password", "")
+        confirm_password = request.form.get("confirm-password", "")
+
+        if not first_name or not last_name or not email or not dob or not gender or not password:
+            flash("Please fill all required fields.")
+            return redirect(url_for("register"))
+
+        if not email.endswith("@student.uwa.edu.au"):
+            flash("Please use your UWA student email.")
+            return redirect(url_for("register"))
+
+        if password != confirm_password:
+            flash("Passwords do not match.")
+            return redirect(url_for("register"))
+
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user and existing_user.is_verified:
+            flash("This email is already registered. Please login.")
+            return redirect(url_for("login"))
+        
+        if existing_user and not existing_user.is_verified:
+            otp = create_otp()
+
+            existing_user.first_name = first_name
+            existing_user.last_name = last_name
+            existing_user.dob = dob
+            existing_user.gender = gender
+            existing_user.otp_number = otp
+            existing_user.otp_generation_time = datetime.now()
+            existing_user.set_password(password)
+
+            db.session.commit()
+
+            send_otp(email, otp)
+
+            flash("Account already registered but not verified. A new OTP has been sent to your email, please verify!")
+            return redirect(url_for("otp_verification", email=email))
+
+
+        otp = create_otp()
+
+        user = User(
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            dob=dob,
+            gender=gender,
+            is_verified=False,
+            otp_number=otp,
+            otp_generation_time=datetime.now(),
+        )
+
+        user.set_password(password)
+
+        db.session.add(user)
+        db.session.commit()
+
+        send_otp(email, otp)
+
+        flash("Account created successfully. Please check your email for OTP.")
+        return redirect(url_for("otp_verification", email=email))
+
+    return render_template("register.html", active_nav="register")
+
+@app.route("/verify-otp", methods=["GET", "POST"])
+def otp_verification():
+    email = request.args.get("email", "").strip().lower()
+
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        entered_otp = request.form.get("otp", "").strip()
+
+        user = User.query.filter_by(email=email).first()
+
+        if not user or user.otp_number != entered_otp:
+            flash("Invalid OTP. Please try again.")
+            return redirect(url_for("otp_verification", email=email))
+
+        user.is_verified = True
+        user.otp_number = None
+        user.otp_generation_time = None
+
+        db.session.commit()
+
+        flash("Email verified successfully. You can now login.")
+        return redirect(url_for("login"))
+
+    return render_template("otp_verification.html", email=email)
 
 
 @app.route("/marketplace")
 def marketplace():
+    if not logged_in():
+        flash("Please login first.")
+        return redirect(url_for("login"))
     selected_category = request.args.get("category", "All")
     search_query = request.args.get("q", "").strip().lower()
 
@@ -264,6 +441,9 @@ def marketplace():
 
 @app.route("/post-listing", methods=["GET", "POST"])
 def post_listing():
+    if not logged_in():
+        flash("Please login first.")
+        return redirect(url_for("login"))
     if request.method == "POST":
         image_file = request.files.get("image")
         image_name = "placeholder-other.svg"
@@ -303,6 +483,9 @@ def post_listing():
 
 @app.route("/message-seller/<int:item_id>", methods=["GET", "POST"])
 def message_seller(item_id):
+    if not logged_in():
+        flash("Please login first.")
+        return redirect(url_for("login"))
     selected_item = get_item(item_id)
 
     if not selected_item:
@@ -337,6 +520,9 @@ def message_seller(item_id):
 
 @app.route("/bid/<int:item_id>", methods=["POST"])
 def place_bid(item_id):
+    if not logged_in():
+        flash("Please login first.")
+        return redirect(url_for("login"))
     selected_item = get_item(item_id)
 
     if not selected_item:
@@ -367,6 +553,9 @@ def place_bid(item_id):
 
 @app.route("/listing/<int:item_id>/status", methods=["POST"])
 def update_listing_status(item_id):
+    if not logged_in():
+        flash("Please login first.")
+        return redirect(url_for("login"))
     selected_item = get_item(item_id)
 
     if not selected_item:
@@ -389,6 +578,9 @@ def update_listing_status(item_id):
 
 @app.route("/messages")
 def view_messages():
+    if not logged_in():
+        flash("Please login first.")
+        return redirect(url_for("login"))
     own_messages = [message for message in messages if message.get("seller") == CURRENT_USER]
     for message in own_messages:
         message["read"] = True
@@ -397,8 +589,20 @@ def view_messages():
 
 @app.route("/bids")
 def view_bids():
+    if not logged_in():
+        flash("Please login first.")
+        return redirect(url_for("login"))
     own_bids = [bid for bid in bids if bid.get("seller") == CURRENT_USER]
     return render_template("bids.html", bids=own_bids)
+
+@app.route("/logout")
+def logout():
+    if not logged_in():
+        flash("Please login first.")
+        return redirect(url_for("login"))
+    session.clear()
+    flash("Logged out successfully.")
+    return redirect(url_for("login"))
 
 
 if __name__ == "__main__":

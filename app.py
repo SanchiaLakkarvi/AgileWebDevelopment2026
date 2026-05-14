@@ -171,12 +171,13 @@ def create_otp():
     return str(random.randint(100000,999999))
 
 def send_otp(email, otp):
-    message=Message(subject="OTP for verification", recipients=[email], body="Your one time password (OTP) to login to your GuildSpace account securely is:" + otp)
-    return mail.send(message)
+    print(f"OTP for {email}: {otp}")
+    return True
 
 def create_csrf_token():
+    """Create one CSRF token per browser session and reuse it in all forms."""
     if "csrf_token" not in session:
-        session["csrf_token"]=secrets.token_hex(16)
+        session["csrf_token"] = secrets.token_hex(16)
     return session["csrf_token"]
 
 @app.context_processor
@@ -196,11 +197,12 @@ def inject_common_data():
 
 @app.before_request
 def check_csrf_token():
+    """Block POST requests that do not include the correct CSRF token."""
     if request.method == "POST":
         form_token = request.form.get("csrf_token")
         session_token = session.get("csrf_token")
 
-        if not form_token or form_token != session_token:
+        if not form_token or not session_token or form_token != session_token:
             abort(403)
 
 @app.route("/")
@@ -220,7 +222,6 @@ def forum():
     if not logged_in():
         flash("Please login first.")
         return redirect(url_for("login"))
-    return render_template("forum.html")
     return render_template("forum.html", posts=posts, active_nav="forum")
 
 @app.route("/forum/post", methods=["POST"])
@@ -607,3 +608,4 @@ def logout():
 
 if __name__ == "__main__":
     app.run(debug=True)
+

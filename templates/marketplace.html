@@ -76,6 +76,7 @@
 
                     {% if item.seller == current_user %}
                     <form action="{{ url_for('update_listing_status', item_id=item.id) }}" method="POST" class="status-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <label>Edit status</label>
                         <div>
                             <select name="status">
@@ -112,6 +113,7 @@
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <form action="{{ url_for('place_bid', item_id=item.id) }}" method="POST">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <div class="modal-body listing-form compact-form">
                                 <label>Your Name</label>
                                 <input type="text" name="buyer_name" required>

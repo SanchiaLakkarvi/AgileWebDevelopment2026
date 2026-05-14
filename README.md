@@ -1,36 +1,88 @@
-# GuildSpace (AgileWebDevelopment2026)
+# GuildSpace – AgileWebDevelopment2026
 
-A Flask + Jinja course project (local demo version).
+GuildSpace is a student-focused web application developed for the **Agile Web Development 2026** group project. The application is designed as a simple campus community platform where students can access key pages such as the homepage, forum, marketplace, login, and registration pages.
 
-## 1. Project Overview
+The current version includes core page navigation, forum access, and a more developed **Marketplace** module with listing creation, image uploads, messaging, bidding, and seller-side controls.
 
-This project currently follows a **client-server architecture**:
-- Backend: Flask (routing, template rendering, form handling)
-- Frontend: Jinja templates + Bootstrap + existing static CSS/JS
-- Data: SQLite (Forum), in-memory list (Marketplace)
-- Email: Flask-Mail (Forum comment notifications)
+---
 
-## 2. Current Folder Structure
+## Project Description
+
+This project demonstrates a Flask-based web application using server-side rendering with Jinja templates. It simulates a university community platform where students can interact through shared pages and marketplace features.
+
+The application currently runs as a local development/demo version. It uses Flask for backend routing, Jinja for template rendering, HTML/CSS for the frontend interface, and simple demo data structures for marketplace functionality.
+
+The project is intended to demonstrate key agile web development concepts such as:
+
+- Flask routing
+- Jinja template rendering
+- Form handling
+- Image uploads
+- Static file management
+- Marketplace listing creation
+- Messaging and bidding workflows
+- Basic seller ownership behaviour
+- Manual testing and GitHub workflow
+
+---
+
+## Main Features
+
+- Homepage with navigation to key sections of the site
+- Login and registration page templates
+- Forum page access
+- Marketplace page with item cards
+- Category filtering and search functionality
+- Create listing form with image upload support
+- Listing status system using `Active`, `Pending`, and `Sold`
+- Seller-only status update behaviour for owned listings
+- Message seller feature
+- Inbox page for viewing messages received by the current seller
+- Bidding feature for listings with `Pending` status
+- Bids page for sellers to view bids placed on their own listings
+- Shared base template and consistent styling through static CSS
+
+> Note: This is a course/demo version. Some features such as real user authentication, persistent marketplace database storage, and production-level email notifications are not fully connected yet.
+
+---
+
+## Group Members
+
+Replace the placeholder details below with the final group member names, student IDs, and contribution details before submission.
+
+| Name | Student ID | Main Contribution / Responsibility |
+|---|---:|---|
+| Sanchia Recson Lakkarvi | 24732787 | Marketplace page, listing upload, bidding, messaging/inbox flow, seller-side controls, README update, documentation|
+| Zeyu Wang| 23320288 | Homepage, Forum page, navigation, and UI support |
+| Nikhil Chadha | 24231774 | Login and registration pages |
+
+---
+
+## Technology Stack
+
+| Area | Technology Used |
+|---|---|
+| Backend | Python, Flask |
+| Frontend | HTML, CSS, Jinja templates |
+| Styling | CSS, Bootstrap-style layout concepts |
+| File Uploads | Werkzeug secure filename handling |
+| Data Storage | In-memory Python lists for marketplace demo data |
+| Database | SQLite for forum-related data |
+| Assets | Static images and uploaded images |
+| Version Control | Git and GitHub |
+
+---
+
+## Project Structure
 
 ```text
-.
+AgileWebDevelopment2026-main-3/
 ├── app.py
+├── requirements.txt
 ├── mail_config.py
+├── README.md
 ├── data/
 │   └── forum.db
-├── server/
-│   ├── __init__.py
-│   ├── extensions.py
-│   ├── routes/
-│   │   ├── __init__.py
-│   │   ├── forum.py
-│   │   └── marketplace.py
-│   ├── models/
-│   │   ├── __init__.py
-│   │   └── forum.py
-│   └── utils/
-│       ├── __init__.py
-│       └── mailer.py
 ├── templates/
 │   ├── base.html
 │   ├── home.html
@@ -39,129 +91,24 @@ This project currently follows a **client-server architecture**:
 │   ├── forum.html
 │   ├── marketplace.html
 │   ├── post_listing.html
-│   └── message_seller.html
+│   ├── message_seller.html
+│   ├── messages.html
+│   └── bids.html
+├── static/
+│   ├── css/
+│   │   └── style.css
+│   └── images/
+│       ├── uploads/
+│       └── marketplace image files
+├── server/
+│   ├── routes/
+│   ├── models/
+│   └── utils/
 ├── src/
+│   ├── assets/
 │   ├── components/
-│   │   └── navbar.js
 │   ├── pages/
-│   │   └── Forum/forum.js
 │   ├── styles/
-│   │   ├── global.css
-│   │   ├── homepage.css
-│   │   ├── login.css
-│   │   ├── forum.css
-│   │   └── marketplace.css
-│   ├── uploads/
-│   └── assets/
-└── static/
-    └── images/
-```
-
-## 3. Run Locally
-
-### 3.1 Create a virtual environment and install dependencies
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install flask flask-sqlalchemy flask-mail
-```
-
-### 3.2 Start the server
-
-```bash
-python3 app.py
-```
-
-Default URL: `http://127.0.0.1:5000`
-
-## 4. Page Entry Points
-
-- Home: `GET /`
-- Login: `GET /login`
-- Register: `GET /register`
-- Forum: `GET /forum`
-- Marketplace: `GET /marketplace`
-
-## 5. Main Route Details
-
-### 5.1 Forum (database-backed)
-
-- `GET /forum`: render forum page
-- `POST /forum/post`: create a post (supports image upload)
-- `POST /forum/<post_id>/like`: like a post
-- `POST /forum/<post_id>/dislike`: dislike a post
-- `POST /forum/<post_id>/comment`: add a comment
-
-Forum data is stored in SQLite: `data/forum.db`.
-
-### 5.2 Marketplace (in-memory data)
-
-- `GET /marketplace`: marketplace page
-- `GET|POST /post-listing`: create a listing
-- `GET /message-seller/<item_id>`: message seller
-- `GET /market-images/<filename>`: serve marketplace images
-
-Current Marketplace items are defined in `server/routes/marketplace.py` (`items` list) and reset on restart.
-
-## 6. Static Assets and Templates
-
-### 6.1 Flask static mapping
-
-In `server/__init__.py`:
-- `static_folder` points to `src`
-- `static_url_path` is `/static`
-
-So template static references use:
-- `{{ url_for('static', filename='styles/forum.css') }}`
-- `{{ url_for('static', filename='components/navbar.js') }}`
-
-### 6.2 Image storage
-
-- Forum user uploads: saved to `src/uploads/`, served as `/static/uploads/...`
-- Marketplace images: stored in `static/images/`, served via `/market-images/...`
-
-## 7. Email Notifications (Forum Comments)
-
-When someone comments on a post, the app attempts to send an email to the post owner if an email address is provided.
-
-Configuration file: `mail_config.py`
-
-Config keys:
-- `MAIL_SERVER`
-- `MAIL_PORT`
-- `MAIL_USE_TLS`
-- `MAIL_USE_SSL`
-- `MAIL_USERNAME`
-- `MAIL_PASSWORD`
-- `MAIL_DEFAULT_SENDER`
-
-> Note: For this course demo, file-based config is allowed. In production, use environment variables.
-
-## 8. Development Conventions
-
-- `app.py` is startup entry only.
-- Put Flask routes in `server/routes/`.
-- Put database models in `server/models/`.
-- Put shared logic (e.g., email) in `server/utils/`.
-- Render pages from `templates/`; `src/pages/*` can be kept as static prototypes, not Flask render entry points.
-
-## 9. FAQ
-
-### 9.1 Why does the page not reflect DB changes?
-
-Check:
-- Server restarted
-- You are operating on `data/forum.db`
-- You are visiting Flask routes (not opening local HTML files directly)
-
-### 9.2 Why is an uploaded image not visible?
-
-Check:
-- Form uses `enctype="multipart/form-data"`
-- File is saved in `src/uploads/`
-- Page references `/static/uploads/...`
-
----
-
-For future extension (real login auth, register persistence, OTP, centralized config), continue building in `server/utils/` and `server/models/`.
+│   └── uploads/
+├── planning/
+└── design/

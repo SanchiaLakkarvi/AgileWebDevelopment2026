@@ -184,8 +184,9 @@ def send_otp(email, otp):
     return mail.send(message)
 
 def create_csrf_token():
+    """Create one CSRF token per browser session and reuse it in all forms."""
     if "csrf_token" not in session:
-        session["csrf_token"]=secrets.token_hex(16)
+        session["csrf_token"] = secrets.token_hex(16)
     return session["csrf_token"]
 
 @app.context_processor
@@ -205,11 +206,12 @@ def inject_common_data():
 
 @app.before_request
 def check_csrf_token():
+    """Block POST requests that do not include the correct CSRF token."""
     if request.method == "POST":
         form_token = request.form.get("csrf_token")
         session_token = session.get("csrf_token")
 
-        if not form_token or form_token != session_token:
+        if not form_token or not session_token or form_token != session_token:
             abort(403)
 
 @app.route("/")
@@ -675,3 +677,4 @@ def logout():
 
 if __name__ == "__main__":
     app.run(debug=True)
+

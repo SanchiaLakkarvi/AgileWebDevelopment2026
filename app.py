@@ -45,7 +45,199 @@ CURRENT_USER = "Sanchia"
 CATEGORIES = ["Books", "Electronics", "Furniture", "Accommodation", "Accessories", "Food", "Other"]
 STATUSES = ["Active", "Pending", "Sold"]
 
-posts = []
+posts = [
+    {
+        "id": 1,
+        "author": "uwastudentguild",
+        "author_email": "",
+        "title": "National Volunteer Week",
+        "content": """Join us for an evening dedicated to recognising and thanking the incredible volunteers and partner organisations who give their time, energy, and passion to support our community 🙌""",
+        "category": "Events",
+        "image_url": "/static/images/forum/Volunteer.png",
+        "created_at": datetime(2026, 5, 13, 18, 30),
+        "likes": 14,
+        "dislikes": 0,
+        "comments": [
+            {
+                "author": "Maya",
+                "text": "This sounds lovely! Are registrations required?",
+                "created_at": datetime(2026, 5, 13, 19, 10)
+            }
+        ]
+    },
+    {
+        "id": 2,
+        "author": "Japanese Club at UWA",
+        "author_email": "",
+        "title": "Tokyo Alley",
+        "content": """JSS is once again having a stall at @tokyoalleyperth this year 🎟️ Come down to Tokyo Alley and check out everything that’s being offered! JSS will be running the traditional Japanese game Fukuwarai as the activity, so try your hand at remaking the face blindfolded.""",
+        "category": "Events",
+        "image_url": "/static/images/forum/tokoyo.jpg",
+        "created_at": datetime(2026, 5, 6, 13, 15),
+        "likes": 21,
+        "dislikes": 1,
+        "comments": [
+            {
+                "author": "Aiko",
+                "text": "The Fukuwarai activity sounds so fun!",
+                "created_at": datetime(2026, 5, 6, 14, 5)
+            }
+        ]
+    },
+    {
+        "id": 3,
+        "author": "itsmsuofficial",
+        "author_email": "",
+        "title": "The Amber Lounge",
+        "content": """Settle into the glow of a night filled with sound and soul…
+
+MSU presents: The Amber Lounge, An all-ages charity concert featuring live performances all night, from local musicians and bands to dancers. Food and drinks available!""",
+        "category": "Life",
+        "image_url": "/static/images/forum/amber.png",
+        "created_at": datetime(2026, 5, 1, 20, 0),
+        "likes": 18,
+        "dislikes": 0,
+        "comments": []
+    },
+    {
+        "id": 4,
+        "author": "uwaartsunion",
+        "author_email": "",
+        "title": "Movie Night",
+        "content": """Join us next Wednesday, 4-6PM, for AU x JSS’s movie night 🎥 Open to everyone, with free food included 🍕
+No tickets required. Just drop by Austin Lecture Theatre alone or with your friends.""",
+        "category": "Life",
+        "image_url": "/static/images/forum/movie.png",
+        "created_at": datetime(2026, 5, 11, 16, 0),
+        "likes": 12,
+        "dislikes": 0,
+        "comments": [
+            {
+                "author": "Sam",
+                "text": "Free food and anime movies is such a good combo.",
+                "created_at": datetime(2026, 5, 11, 17, 20)
+            }
+        ]
+    },
+    {
+        "id": 5,
+        "author": "Sanchia",
+        "author_email": "",
+        "title": "Lost Stanley Mug",
+        "content": """I lost my white Stanley tumbler with black polka dots in the food court area near the café/entrance today at noon.
+
+It is very important to me. If anyone found it or handed it in to security, please comment or send me a message!""",
+        "category": "LostFound",
+        "image_url": "/static/images/forum/STANLEY.jpeg",
+        "created_at": datetime(2026, 5, 14, 12, 10),
+        "likes": 6,
+        "dislikes": 0,
+        "comments": [
+            {
+                "author": "Nidhi",
+                "text": "I’ll keep an eye out near the café area.",
+                "created_at": datetime(2026, 5, 14, 12, 45)
+            }
+        ]
+    },
+    {
+        "id": 6,
+        "author": "uwacareersemployability",
+        "author_email": "",
+        "title": "Work Integrated Learning Workshop",
+        "content": """Thinking of applying for an internship for credit?Register for the Work Integrated Learning Workshop next week, Tuesday, to learn more about how you can source and apply for internships relevant to your study.""",
+        "category": "Study",
+        "image_url": "/static/images/forum/wil.png",
+        "created_at": datetime(2026, 4, 5, 10, 30),
+        "likes": 16,
+        "dislikes": 0,
+        "comments": []
+    },
+    {
+        "id": 7,
+        "author": "Abhishek",
+        "author_email": "",
+        "title": "Lost USB-C Charger",
+        "content": """Hey everyone! I left my USB-C charger in Ross Lecture Theatre, possibly around row 3, earlier today.
+
+If anyone has picked it up, please let me know. I'd really appreciate it!""",
+        "category": "LostFound",
+        "image_url": "/static/images/forum/charger.jpg",
+        "created_at": datetime(2026, 5, 10, 15, 40),
+        "likes": 5,
+        "dislikes": 0,
+        "comments": [
+            {
+                "author": "Priya",
+                "text": "Maybe check with the lecture theatre lost property desk too.",
+                "created_at": datetime(2026, 5, 10, 16, 5)
+            }
+        ]
+    },
+    {
+        "id": 8,
+        "author": "universityengineersclub",
+        "author_email": "",
+        "title": "Study Night",
+        "content": """IG FINAL EXAM STUDY NIGHT!!!!Massive collab study night across multiple EMS units with tutors from different clubs all in one place.""",
+        "category": "Study",
+        "image_url": "/static/images/forum/exam.png",
+        "created_at": datetime(2026, 5, 12, 18, 0),
+        "likes": 28,
+        "dislikes": 1,
+        "comments": [
+            {
+                "author": "Daniel",
+                "text": "This is exactly what I need before finals.",
+                "created_at": datetime(2026, 5, 12, 18, 50)
+            },
+            {
+                "author": "Sophie",
+                "text": "Will CITS units be supported?",
+                "created_at": datetime(2026, 5, 12, 19, 15)
+            }
+        ]
+    },
+    {
+        "id": 9,
+        "author": "perthinternational",
+        "author_email": "",
+        "title": "Boat Party",
+        "content": """With the end of semester fast approaching, it’s time for our hottest event — RAVE ON THE WAVES 🌊🔥 The ultimate send-off is here. Our iconic semester boat party is back 🕺💃✨""",
+        "category": "Life",
+        "image_url": "/static/images/forum/rave.png",
+        "created_at": datetime(2026, 5, 3, 19, 30),
+        "likes": 25,
+        "dislikes": 2,
+        "comments": []
+    },
+    {
+        "id": 10,
+        "author": "venture_uwa",
+        "author_email": "",
+        "title": "Panel Night",
+        "content": """What does the future of energy look like — and who is shaping it?On Tuesday, 22 April, we're bringing together leaders across industry, research, and startups to unpack the technologies, risks, and opportunities driving the global energy transition.""",
+        "category": "Events",
+        "image_url": "/static/images/forum/panel.jpg",
+        "created_at": datetime(2026, 4, 16, 17, 45),
+        "likes": 11,
+        "dislikes": 0,
+        "comments": []
+    },
+    {
+        "id": 11,
+        "author": "uwaguild_wellbeing",
+        "author_email": "",
+        "title": "Picnic Blankets, Poetry and Harmony",
+        "content": """Picnic blankets, poetry, and harmony. Join us as we kick off Harmony Week with poems, food and good vibes! Bring a picnic blanket, invite your friends and enjoy a relaxed community event on campus.""",
+        "category": "Events",
+        "image_url": "/static/images/forum/picinic.png",
+        "created_at": datetime(2026, 3, 11, 12, 0),
+        "likes": 10,
+        "dislikes": 0,
+        "comments": []
+    }
+]
 
 items = [
     {
@@ -226,19 +418,38 @@ def forum():
 
 @app.route("/forum/post", methods=["POST"])
 def create_post():
+    image_url = ""
+    image_file = request.files.get("image_file")
+
+    if image_file and image_file.filename:
+        if allowed_file(image_file.filename):
+            safe_name = secure_filename(image_file.filename)
+            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+            saved_name = f"{timestamp}_{safe_name}"
+
+            upload_dir = Path(app.static_folder or (BASE_DIR / "static")) / "assets" / "images" / "uploads"
+            upload_dir.mkdir(parents=True, exist_ok=True)
+
+            image_file.save(upload_dir / saved_name)
+            image_url = url_for("static", filename=f"assets/images/uploads/{saved_name}")
+        else:
+            flash("Please upload a valid image file: png, jpg, jpeg, gif, or webp.")
+            return redirect(url_for("forum"))
+
     new_post = {
         "id": len(posts) + 1,
-        "author": request.form.get("author", "Anonymous"),
-        "author_email": request.form.get("author_email", ""),
-        "title": request.form.get("title", ""),
-        "content": request.form.get("content", ""),
+        "author": request.form.get("author", "Anonymous").strip() or "Anonymous",
+        "author_email": request.form.get("author_email", "").strip(),
+        "title": request.form.get("title", "").strip(),
+        "content": request.form.get("content", "").strip(),
         "category": request.form.get("category", "Study"),
-        "image_url": "",
+        "image_url": image_url,
         "created_at": datetime.utcnow(),
         "likes": 0,
         "dislikes": 0,
         "comments": []
     }
+
     posts.insert(0, new_post)
     flash("Post published.")
     return redirect(url_for("forum"))
@@ -257,7 +468,25 @@ def inject_forum_helpers():
         return "Lost & Found" if category == "LostFound" else category
 
     def relative_time(value):
-        return "just now"
+        if not value:
+            return ""
+
+        now = datetime.utcnow()
+        diff = now - value
+
+        if diff.days == 0:
+            if diff.seconds < 60:
+                return "just now"
+            if diff.seconds < 3600:
+                minutes = diff.seconds // 60
+                return f"{minutes} min ago"
+            hours = diff.seconds // 3600
+            return f"{hours} hr ago"
+
+        if diff.days == 1:
+            return "yesterday"
+
+        return value.strftime("%d %b %Y")
 
     return {
         "category_label": category_label,

@@ -354,11 +354,25 @@ def get_item(item_id):
     return next((item for item in items if item["id"] == item_id), None)
 
 
-def is_owner(item):
-    return item and item.get("seller") == CURRENT_USER
-
 def logged_in():
     return "user_id" in session
+
+
+def current_user_name():
+    return session.get("user_name", CURRENT_USER)
+
+
+def current_user_first_name():
+    name = session.get("user_name", "")
+    return name.split()[0] if name else CURRENT_USER
+
+
+def current_user_email():
+    return session.get("user_email", "")
+
+
+def is_owner(item):
+    return item and item.get("seller") == current_user_first_name()
 
 def create_otp():
     return str(random.randint(100000,999999))
@@ -375,8 +389,18 @@ def create_csrf_token():
 
 @app.context_processor
 def inject_common_data():
-    unread_count = len([message for message in messages if message.get("seller") == CURRENT_USER and not message.get("read")])
-    own_bid_count = len([bid for bid in bids if bid.get("seller") == CURRENT_USER])
+    current_user = current_user_first_name()
+
+    unread_count = len([
+        message for message in messages
+        if message.get("seller") == current_user and not message.get("read")
+    ])
+
+    own_bid_count = len([
+        bid for bid in bids
+        if bid.get("seller") == current_user
+    ])
+
     return {
         "logged_in": "user_id" in session,
         "logged_in_user": session.get("user_name"),
@@ -384,7 +408,7 @@ def inject_common_data():
         "own_bid_count": own_bid_count,
         "categories": CATEGORIES,
         "statuses": STATUSES,
-        "current_user": CURRENT_USER,
+        "current_user": current_user,
         "csrf_token": create_csrf_token,
     }
 
@@ -722,7 +746,7 @@ def post_listing():
             "title": request.form["title"],
             "price": int(request.form["price"]),
             "image": image_name,
-            "seller": CURRENT_USER,
+            "seller": current_user_first_name(),
             "time": "Just now",
             "category": category,
             "status": "Active",
@@ -760,8 +784,8 @@ def message_seller(item_id):
             "item_id": selected_item["id"],
             "item_title": selected_item["title"],
             "seller": selected_item["seller"],
-            "buyer_name": request.form["name"],
-            "buyer_email": request.form["email"],
+            "buyer_name": request.form.get("name", "").strip() or current_user_name(),
+            "buyer_email": request.form.get("email", "").strip() or current_user_email(),
             "message": request.form["message"],
             "time": datetime.now().strftime("%d %b, %I:%M %p"),
             "read": False
@@ -777,6 +801,7 @@ def place_bid(item_id):
     if not logged_in():
         flash("Please login first.")
         return redirect(url_for("login"))
+
     selected_item = get_item(item_id)
 
     if not selected_item:
@@ -796,11 +821,12 @@ def place_bid(item_id):
         "item_id": selected_item["id"],
         "item_title": selected_item["title"],
         "seller": selected_item["seller"],
-        "buyer_name": request.form["buyer_name"],
-        "buyer_email": request.form["buyer_email"],
+        "buyer_name": request.form.get("buyer_name", "").strip() or current_user_name(),
+        "buyer_email": request.form.get("buyer_email", "").strip() or current_user_email(),
         "bid_amount": request.form["bid_amount"],
         "time": datetime.now().strftime("%d %b, %I:%M %p")
     })
+
     flash("Bid placed successfully.")
     return redirect(url_for("marketplace"))
 
@@ -835,7 +861,10 @@ def view_messages():
     if not logged_in():
         flash("Please login first.")
         return redirect(url_for("login"))
-    own_messages = [message for message in messages if message.get("seller") == CURRENT_USER]
+    own_messages = [
+    message for message in messages
+    if message.get("seller") == current_user_first_name()
+]
     for message in own_messages:
         message["read"] = True
     return render_template("messages.html", messages=own_messages)
@@ -846,7 +875,10 @@ def view_bids():
     if not logged_in():
         flash("Please login first.")
         return redirect(url_for("login"))
-    own_bids = [bid for bid in bids if bid.get("seller") == CURRENT_USER]
+    own_bids = [
+    bid for bid in bids
+    if bid.get("seller") == current_user_first_name()
+]
     return render_template("bids.html", bids=own_bids)
 
 @app.route("/logout")

@@ -4,10 +4,12 @@ from datetime import datetime
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 
 from server.extensions import db
-from server.models.forum import Comment, Post
+from server.models.post import ForumPost, ForumComment
 from server.utils.mailer import send_comment_notification
 
+
 forum_bp = Blueprint("forum", __name__)
+
 ALLOWED_CATEGORIES = {"Study", "Events", "Life", "LostFound"}
 ALLOWED_IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp", ".gif"}
 
@@ -38,12 +40,12 @@ def relative_time(value) -> str:
         return f"{total_seconds // 3600}h ago"
     if total_seconds < 7 * 86400:
         return f"{total_seconds // 86400}d ago"
+
     return format_dt(value)
 
 
 @forum_bp.app_context_processor
 def inject_template_helpers():
-    # Expose formatting helpers directly to Jinja templates.
     return {
         "category_label": category_label,
         "format_dt": format_dt,
@@ -53,7 +55,10 @@ def inject_template_helpers():
 
 @forum_bp.get("/forum")
 def forum_page() -> str:
-    posts = db.session.scalars(db.select(Post).order_by(Post.created_at.desc())).all()
+    posts = db.session.scalars(
+        db.select(ForumPost).order_by(ForumPost.created_at.desc())
+    ).all()
+
     return render_template(
         "forum.html",
         page_title="GuildSpace | Forum",
@@ -77,7 +82,7 @@ def create_post():
 
     image_file = request.files.get("image_file")
     if image_file and image_file.filename:
-        uploads_dir = os.path.join("src", "uploads")
+        uploads_dir = os.path.join("static", "images", "uploads")
         os.makedirs(uploads_dir, exist_ok=True)
 
         ext = os.path.splitext(image_file.filename)[1].lower()
@@ -90,12 +95,12 @@ def create_post():
 
         try:
             image_file.save(save_path)
-            image_url = url_for("static", filename=f"uploads/{filename}")
+            image_url = url_for("static", filename=f"images/uploads/{filename}")
         except OSError:
             flash("Image upload failed. Please try again.", "danger")
             return redirect(url_for("forum.forum_page"))
 
-    post = Post(
+    post = ForumPost(
         author=author,
         author_email=author_email,
         title=title,
@@ -103,6 +108,7 @@ def create_post():
         category=category,
         image_url=image_url,
     )
+
     db.session.add(post)
     db.session.commit()
 
@@ -112,37 +118,40 @@ def create_post():
 
 @forum_bp.post("/forum/<int:post_id>/like")
 def like_post(post_id: int):
-    post = db.get_or_404(Post, post_id)
+    post = db.get_or_404(ForumPost, post_id)
     post.likes = int(post.likes or 0) + 1
     db.session.commit()
+
     return redirect(url_for("forum.forum_page", _anchor=f"post-{post_id}"))
 
 
 @forum_bp.post("/forum/<int:post_id>/dislike")
 def dislike_post(post_id: int):
-    post = db.get_or_404(Post, post_id)
+    post = db.get_or_404(ForumPost, post_id)
     post.dislikes = int(post.dislikes or 0) + 1
     db.session.commit()
+
     return redirect(url_for("forum.forum_page", _anchor=f"post-{post_id}"))
 
 
 @forum_bp.post("/forum/<int:post_id>/comment")
 def add_comment(post_id: int):
-    post = db.get_or_404(Post, post_id)
+    post = db.get_or_404(ForumPost, post_id)
 
     author = str(request.form.get("author", "You")).strip() or "You"
     text = str(request.form.get("text", "")).strip()
+
     if not text:
         flash("Comment cannot be empty.", "danger")
         return redirect(url_for("forum.forum_page", _anchor=f"post-{post_id}"))
 
-    db.session.add(
-        Comment(
-            post_id=post_id,
-            author=author,
-            text=text,
-        )
+    comment = ForumComment(
+        post_id=post_id,
+        author=author,
+        text=text,
     )
+
+    db.session.add(comment)
     db.session.commit()
 
     try:
@@ -154,6 +163,5 @@ def add_comment(post_id: int):
         flash("Comment added, but email notification failed.", "warning")
         return redirect(url_for("forum.forum_page", _anchor=f"post-{post_id}"))
 
-    # PRG pattern: avoid duplicate form submissions on refresh.
     flash("Comment added.", "success")
     return redirect(url_for("forum.forum_page", _anchor=f"post-{post_id}"))

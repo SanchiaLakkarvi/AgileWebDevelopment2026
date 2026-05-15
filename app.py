@@ -7,6 +7,7 @@ from werkzeug.utils import secure_filename
 from flask import Flask, render_template, request, redirect, url_for, flash, session, abort
 from server.extensions import db, mail
 from server.models.user import User
+from server.models.post import ForumPost, ForumComment
 
 app = Flask(__name__)
 app.secret_key = "guildspace-dev-secret"
@@ -457,9 +458,14 @@ def create_post():
 
 @app.route("/forum/<int:post_id>/like", methods=["POST"])
 def like_post(post_id):
-    post = next((p for p in posts if p["id"] == post_id), None)
-    if post:
-        post["likes"] += 1
+    if not logged_in():
+        flash("Please login first.")
+        return redirect(url_for("login"))
+
+    post = ForumPost.query.get_or_404(post_id)
+    post.likes += 1
+    db.session.commit()
+
     return redirect(url_for("forum"))
 
 @app.context_processor
@@ -496,23 +502,41 @@ def inject_forum_helpers():
 
 @app.route("/forum/<int:post_id>/dislike", methods=["POST"])
 def dislike_post(post_id):
-    post = next((p for p in posts if p["id"] == post_id), None)
-    if post:
-        post["dislikes"] += 1
+    if not logged_in():
+        flash("Please login first.")
+        return redirect(url_for("login"))
+
+    post = ForumPost.query.get_or_404(post_id)
+    post.dislikes += 1
+    db.session.commit()
+
     return redirect(url_for("forum"))
 
 
 @app.route("/forum/<int:post_id>/comment", methods=["POST"])
 def add_comment(post_id):
-    post = next((p for p in posts if p["id"] == post_id), None)
-    if post:
-        comment = {
-            "author": "You",
-            "text": request.form.get("text", ""),
-            "created_at": datetime.utcnow()
-        }
-        post["comments"].append(comment)
-        flash("Comment added.")
+    if not logged_in():
+        flash("Please login first.")
+        return redirect(url_for("login"))
+
+    post = ForumPost.query.get_or_404(post_id)
+    text = request.form.get("text", "").strip()
+
+    if not text:
+        flash("Comment cannot be empty.", "danger")
+        return redirect(url_for("forum"))
+
+    comment = ForumComment(
+        post_id=post.id,
+        text=text,
+        author=session.get("user_name", "You"),
+        user_id=session.get("user_id")
+    )
+
+    db.session.add(comment)
+    db.session.commit()
+
+    flash("Comment added.", "success")
     return redirect(url_for("forum"))
 
 

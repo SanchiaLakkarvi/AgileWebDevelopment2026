@@ -36,6 +36,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.m
       <div id="createPostContent" class="collapse card border mb-3">
         <div class="card-body">
           <form method="post" action="{{ url_for('create_post') }}" class="row g-3" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="col-md-6">
               <label class="form-label" for="authorInput">Your name</label>
               <input id="authorInput" name="author" class="form-control" type="text" maxlength="40"
@@ -149,6 +150,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.m
                 <div class="row g-2 mt-auto">
                   <div class="col-4 d-grid">
                     <form method="post" action="{{ url_for('like_post', post_id=post.id) }}">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                       <button type="submit" class="btn btn-sm btn-outline-success w-100">
                         <i class="bi bi-heart"></i> {{ post.likes }}
                       </button>
@@ -157,6 +159,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.m
 
                   <div class="col-4 d-grid">
                     <form method="post" action="{{ url_for('dislike_post', post_id=post.id) }}">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                       <button type="submit" class="btn btn-sm btn-outline-danger w-100"><i class="bi bi-heartbreak"></i>
                         {{ post.dislikes }}</button>
                     </form>
@@ -189,6 +192,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.m
                   </ul>
 
                   <form method="post" action="{{ url_for('add_comment', post_id=post.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="input-group input-group-sm">
                       <input class="form-control" name="text" type="text" maxlength="240"
                         placeholder="Write a comment..." required />

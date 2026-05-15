@@ -7,6 +7,7 @@ from werkzeug.utils import secure_filename
 from flask import Flask, render_template, request, redirect, url_for, flash, session, abort
 from server.extensions import db, mail
 from server.models.user import User
+from server.models.post import ForumPost, ForumComment
 
 app = Flask(__name__)
 app.secret_key = "guildspace-dev-secret"
@@ -44,8 +45,6 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 CURRENT_USER = "Sanchia"
 CATEGORIES = ["Books", "Electronics", "Furniture", "Accommodation", "Accessories", "Food", "Other"]
 STATUSES = ["Active", "Pending", "Sold"]
-
-posts = []
 
 items = [
     {
@@ -171,8 +170,18 @@ def create_otp():
     return str(random.randint(100000,999999))
 
 def send_otp(email, otp):
-    print(f"OTP for {email}: {otp}")
-    return True
+    if not app.config.get("MAIL_DEFAULT_SENDER") or not app.config.get("MAIL_USERNAME"):
+        print(f"[DEV OTP] Email: {email}, OTP: {otp}")
+        return False
+
+    message = Message(
+        subject="OTP for verification",
+        recipients=[email],
+        sender=app.config["MAIL_DEFAULT_SENDER"],
+        body="Your one time password (OTP) to login to your GuildSpace account securely is: " + otp
+    )
+
+    return mail.send(message)
 
 def create_csrf_token():
     """Create one CSRF token per browser session and reuse it in all forms."""
@@ -222,33 +231,75 @@ def forum():
     if not logged_in():
         flash("Please login first.")
         return redirect(url_for("login"))
-    return render_template("forum.html", posts=posts, active_nav="forum")
+
+    posts = ForumPost.query.order_by(ForumPost.created_at.desc()).all()
+
+    return render_template(
+        "forum.html",
+        posts=posts,
+        active_nav="forum"
+    )
 
 @app.route("/forum/post", methods=["POST"])
 def create_post():
-    new_post = {
-        "id": len(posts) + 1,
-        "author": request.form.get("author", "Anonymous"),
-        "author_email": request.form.get("author_email", ""),
-        "title": request.form.get("title", ""),
-        "content": request.form.get("content", ""),
-        "category": request.form.get("category", "Study"),
-        "image_url": "",
-        "created_at": datetime.utcnow(),
-        "likes": 0,
-        "dislikes": 0,
-        "comments": []
-    }
-    posts.insert(0, new_post)
-    flash("Post published.")
+    if not logged_in():
+        flash("Please login first.")
+        return redirect(url_for("login"))
+
+    title = request.form.get("title", "").strip()
+    content = request.form.get("content", "").strip()
+    category = request.form.get("category", "Study").strip()
+    author = request.form.get("author", "").strip() or session.get("user_name", "Anonymous")
+    author_email = request.form.get("author_email", "").strip()
+
+    if not title or not content or not category:
+        flash("Please fill in all required fields.", "danger")
+        return redirect(url_for("forum"))
+
+    image_url = ""
+
+    image_file = request.files.get("image_file")
+    if image_file and image_file.filename:
+        if not allowed_file(image_file.filename):
+            flash("Please upload a valid image file: png, jpg, jpeg, gif, or webp.", "danger")
+            return redirect(url_for("forum"))
+
+        safe_name = secure_filename(image_file.filename)
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        filename = f"{timestamp}_{safe_name}"
+
+        image_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+        image_file.save(image_path)
+
+        image_url = url_for("static", filename=f"images/uploads/{filename}")
+
+    new_post = ForumPost(
+        title=title,
+        content=content,
+        category=category,
+        author=author,
+        author_email=author_email,
+        image_url=image_url,
+        user_id=session.get("user_id")
+    )
+
+    db.session.add(new_post)
+    db.session.commit()
+
+    flash("Post published successfully.", "success")
     return redirect(url_for("forum"))
 
 
 @app.route("/forum/<int:post_id>/like", methods=["POST"])
 def like_post(post_id):
-    post = next((p for p in posts if p["id"] == post_id), None)
-    if post:
-        post["likes"] += 1
+    if not logged_in():
+        flash("Please login first.")
+        return redirect(url_for("login"))
+
+    post = ForumPost.query.get_or_404(post_id)
+    post.likes += 1
+    db.session.commit()
+
     return redirect(url_for("forum"))
 
 @app.context_processor
@@ -267,23 +318,41 @@ def inject_forum_helpers():
 
 @app.route("/forum/<int:post_id>/dislike", methods=["POST"])
 def dislike_post(post_id):
-    post = next((p for p in posts if p["id"] == post_id), None)
-    if post:
-        post["dislikes"] += 1
+    if not logged_in():
+        flash("Please login first.")
+        return redirect(url_for("login"))
+
+    post = ForumPost.query.get_or_404(post_id)
+    post.dislikes += 1
+    db.session.commit()
+
     return redirect(url_for("forum"))
 
 
 @app.route("/forum/<int:post_id>/comment", methods=["POST"])
 def add_comment(post_id):
-    post = next((p for p in posts if p["id"] == post_id), None)
-    if post:
-        comment = {
-            "author": "You",
-            "text": request.form.get("text", ""),
-            "created_at": datetime.utcnow()
-        }
-        post["comments"].append(comment)
-        flash("Comment added.")
+    if not logged_in():
+        flash("Please login first.")
+        return redirect(url_for("login"))
+
+    post = ForumPost.query.get_or_404(post_id)
+    text = request.form.get("text", "").strip()
+
+    if not text:
+        flash("Comment cannot be empty.", "danger")
+        return redirect(url_for("forum"))
+
+    comment = ForumComment(
+        post_id=post.id,
+        text=text,
+        author=session.get("user_name", "You"),
+        user_id=session.get("user_id")
+    )
+
+    db.session.add(comment)
+    db.session.commit()
+
+    flash("Comment added.", "success")
     return redirect(url_for("forum"))
 
 

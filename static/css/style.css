@@ -649,3 +649,66 @@ body {
   background-color: #ffffff;
   border-top: 1px solid #dbeafe;
 }
+
+/* Marketplace hero size adjustment only */
+.market-hero {
+    width: 100vw;
+    height: clamp(500px, 52vw, 650px);
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    margin-top: -16px;
+    margin-bottom: 0;
+    border-radius: 0;
+    overflow: hidden;
+    position: relative;
+}
+
+.market-hero img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* keeps the dark readable overlay on the left like Forum */
+.market-hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        90deg,
+        rgba(5, 18, 45, 0.82) 0%,
+        rgba(5, 18, 45, 0.58) 38%,
+        rgba(5, 18, 45, 0.22) 70%,
+        rgba(5, 18, 45, 0.08) 100%
+    );
+    z-index: 1;
+}
+
+.market-hero-overlay {
+    position: absolute;
+    z-index: 2;
+    top: 50%;
+    left: 7.5%;
+    transform: translateY(-50%);
+    max-width: 620px;
+    padding: 0;
+}
+
+.market-hero-overlay h1 {
+    font-size: clamp(46px, 4.7vw, 70px);
+    line-height: 1.08;
+}
+
+/* makes the marketplace card overlap the bottom of the hero */
+.market-hero + .page-shell {
+    position: relative;
+    z-index: 3;
+    margin-top: -70px;
+}
+
+.market-hero + .page-shell .marketplace-wrapper {
+    border-radius: 22px;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.12);
+}
+

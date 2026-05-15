@@ -240,6 +240,47 @@ If anyone has picked it up, please let me know. I'd really appreciate it!""",
     }
 ]
 
+def seed_forum_demo_posts():
+    """Seed demo forum posts into SQLite once if the forum table is empty."""
+    if ForumPost.query.first():
+        return
+
+    for demo_post in posts:
+        post = ForumPost(
+            author=demo_post.get("author", "Anonymous"),
+            author_email=demo_post.get("author_email", ""),
+            title=demo_post.get("title", ""),
+            content=demo_post.get("content", ""),
+            category=demo_post.get("category", "Study"),
+            image_url=demo_post.get("image_url", ""),
+            likes=demo_post.get("likes", 0),
+            dislikes=demo_post.get("dislikes", 0),
+        )
+
+        if hasattr(post, "created_at"):
+            post.created_at = demo_post.get("created_at") or datetime.utcnow()
+
+        db.session.add(post)
+        db.session.flush()
+
+        for demo_comment in demo_post.get("comments", []):
+            comment = ForumComment(
+                post_id=post.id,
+                author=demo_comment.get("author", "You"),
+                text=demo_comment.get("text", ""),
+            )
+
+            if hasattr(comment, "created_at"):
+                comment.created_at = demo_comment.get("created_at") or datetime.utcnow()
+
+            db.session.add(comment)
+
+    db.session.commit()
+
+
+with app.app_context():
+    seed_forum_demo_posts()
+
 items = [
     {
         "id": 1,
@@ -442,45 +483,67 @@ def forum():
     if not logged_in():
         flash("Please login first.")
         return redirect(url_for("login"))
-    return render_template("forum.html", posts=posts, active_nav="forum")
+
+    forum_posts = ForumPost.query.order_by(ForumPost.created_at.desc()).all()
+
+    return render_template(
+        "forum.html",
+        posts=forum_posts,
+        active_nav="forum"
+    )
 
 @app.route("/forum/post", methods=["POST"])
 def create_post():
+    if not logged_in():
+        flash("Please login first.")
+        return redirect(url_for("login"))
+
+    author = request.form.get("author", "").strip() or session.get("user_name", "Anonymous")
+    author_email = request.form.get("author_email", "").strip()
+    title = request.form.get("title", "").strip()
+    content = request.form.get("content", "").strip()
+    category = request.form.get("category", "Study").strip()
+
+    if not title or not content or not category:
+        flash("Please fill in all required fields.", "danger")
+        return redirect(url_for("forum"))
+
     image_url = ""
     image_file = request.files.get("image_file")
 
     if image_file and image_file.filename:
-        if allowed_file(image_file.filename):
-            safe_name = secure_filename(image_file.filename)
-            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-            saved_name = f"{timestamp}_{safe_name}"
-
-            upload_dir = Path(app.static_folder or (BASE_DIR / "static")) / "assets" / "images" / "uploads"
-            upload_dir.mkdir(parents=True, exist_ok=True)
-
-            image_file.save(upload_dir / saved_name)
-            image_url = url_for("static", filename=f"assets/images/uploads/{saved_name}")
-        else:
-            flash("Please upload a valid image file: png, jpg, jpeg, gif, or webp.")
+        if not allowed_file(image_file.filename):
+            flash("Please upload a valid image file: png, jpg, jpeg, gif, or webp.", "danger")
             return redirect(url_for("forum"))
 
-    new_post = {
-        "id": len(posts) + 1,
-        "author": request.form.get("author", "Anonymous").strip() or "Anonymous",
-        "author_email": request.form.get("author_email", "").strip(),
-        "title": request.form.get("title", "").strip(),
-        "content": request.form.get("content", "").strip(),
-        "category": request.form.get("category", "Study"),
-        "image_url": image_url,
-        "created_at": datetime.utcnow(),
-        "likes": 0,
-        "dislikes": 0,
-        "comments": []
-    }
+        safe_name = secure_filename(image_file.filename)
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        filename = f"{timestamp}_{safe_name}"
 
-    posts.insert(0, new_post)
-    flash("Post published.")
-    return redirect(url_for("forum"))
+        image_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+        image_file.save(image_path)
+
+        image_url = url_for("static", filename=f"images/uploads/{filename}")
+
+    new_post = ForumPost(
+        author=author,
+        author_email=author_email,
+        title=title,
+        content=content,
+        category=category,
+        image_url=image_url,
+        likes=0,
+        dislikes=0,
+    )
+
+    if hasattr(new_post, "user_id"):
+        new_post.user_id = session.get("user_id")
+
+    db.session.add(new_post)
+    db.session.commit()
+
+    flash("Post published successfully.", "success")
+    return redirect(url_for("forum", _anchor=f"post-{new_post.id}"))
 
 
 @app.route("/forum/<int:post_id>/like", methods=["POST"])
@@ -489,13 +552,9 @@ def like_post(post_id):
         flash("Please login first.")
         return redirect(url_for("login"))
 
-    post = get_forum_post(post_id)
-
-    if not post:
-        flash("Post not found.", "danger")
-        return redirect(url_for("forum"))
-
-    post["likes"] = int(post.get("likes", 0)) + 1
+    post = ForumPost.query.get_or_404(post_id)
+    post.likes = int(post.likes or 0) + 1
+    db.session.commit()
 
     return redirect(url_for("forum", _anchor=f"post-{post_id}"))
 
@@ -537,13 +596,9 @@ def dislike_post(post_id):
         flash("Please login first.")
         return redirect(url_for("login"))
 
-    post = get_forum_post(post_id)
-
-    if not post:
-        flash("Post not found.", "danger")
-        return redirect(url_for("forum"))
-
-    post["dislikes"] = int(post.get("dislikes", 0)) + 1
+    post = ForumPost.query.get_or_404(post_id)
+    post.dislikes = int(post.dislikes or 0) + 1
+    db.session.commit()
 
     return redirect(url_for("forum", _anchor=f"post-{post_id}"))
 
@@ -554,25 +609,24 @@ def add_comment(post_id):
         flash("Please login first.")
         return redirect(url_for("login"))
 
-    post = get_forum_post(post_id)
-
-    if not post:
-        flash("Post not found.", "danger")
-        return redirect(url_for("forum"))
-
+    post = ForumPost.query.get_or_404(post_id)
     text = request.form.get("text", "").strip()
 
     if not text:
         flash("Comment cannot be empty.", "danger")
         return redirect(url_for("forum", _anchor=f"post-{post_id}"))
 
-    comment = {
-        "author": session.get("user_name", "You"),
-        "text": text,
-        "created_at": datetime.utcnow()
-    }
+    comment = ForumComment(
+        post_id=post.id,
+        text=text,
+        author=session.get("user_name", "You"),
+    )
 
-    post.setdefault("comments", []).append(comment)
+    if hasattr(comment, "user_id"):
+        comment.user_id = session.get("user_id")
+
+    db.session.add(comment)
+    db.session.commit()
 
     flash("Comment added.", "success")
     return redirect(url_for("forum", _anchor=f"post-{post_id}"))

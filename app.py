@@ -353,6 +353,9 @@ def allowed_file(filename):
 def get_item(item_id):
     return next((item for item in items if item["id"] == item_id), None)
 
+def get_forum_post(post_id):
+    return next((post for post in posts if post["id"] == post_id), None)
+
 
 def logged_in():
     return "user_id" in session
@@ -486,11 +489,15 @@ def like_post(post_id):
         flash("Please login first.")
         return redirect(url_for("login"))
 
-    post = ForumPost.query.get_or_404(post_id)
-    post.likes += 1
-    db.session.commit()
+    post = get_forum_post(post_id)
 
-    return redirect(url_for("forum"))
+    if not post:
+        flash("Post not found.", "danger")
+        return redirect(url_for("forum"))
+
+    post["likes"] = int(post.get("likes", 0)) + 1
+
+    return redirect(url_for("forum", _anchor=f"post-{post_id}"))
 
 @app.context_processor
 def inject_forum_helpers():
@@ -530,11 +537,15 @@ def dislike_post(post_id):
         flash("Please login first.")
         return redirect(url_for("login"))
 
-    post = ForumPost.query.get_or_404(post_id)
-    post.dislikes += 1
-    db.session.commit()
+    post = get_forum_post(post_id)
 
-    return redirect(url_for("forum"))
+    if not post:
+        flash("Post not found.", "danger")
+        return redirect(url_for("forum"))
+
+    post["dislikes"] = int(post.get("dislikes", 0)) + 1
+
+    return redirect(url_for("forum", _anchor=f"post-{post_id}"))
 
 
 @app.route("/forum/<int:post_id>/comment", methods=["POST"])
@@ -543,25 +554,28 @@ def add_comment(post_id):
         flash("Please login first.")
         return redirect(url_for("login"))
 
-    post = ForumPost.query.get_or_404(post_id)
+    post = get_forum_post(post_id)
+
+    if not post:
+        flash("Post not found.", "danger")
+        return redirect(url_for("forum"))
+
     text = request.form.get("text", "").strip()
 
     if not text:
         flash("Comment cannot be empty.", "danger")
-        return redirect(url_for("forum"))
+        return redirect(url_for("forum", _anchor=f"post-{post_id}"))
 
-    comment = ForumComment(
-        post_id=post.id,
-        text=text,
-        author=session.get("user_name", "You"),
-        user_id=session.get("user_id")
-    )
+    comment = {
+        "author": session.get("user_name", "You"),
+        "text": text,
+        "created_at": datetime.utcnow()
+    }
 
-    db.session.add(comment)
-    db.session.commit()
+    post.setdefault("comments", []).append(comment)
 
     flash("Comment added.", "success")
-    return redirect(url_for("forum"))
+    return redirect(url_for("forum", _anchor=f"post-{post_id}"))
 
 
 @app.route("/login", methods=["GET", "POST"])

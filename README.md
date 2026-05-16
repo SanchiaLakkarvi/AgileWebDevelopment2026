@@ -1,36 +1,128 @@
-# GuildSpace (AgileWebDevelopment2026)
+# GuildSpace
 
-A Flask + Jinja course project (local demo version).
+GuildSpace is a student-only UWA community web application designed to help students connect, share information, trade second-hand items, and interact with campus-related posts.
 
-## 1. Project Overview
+The application supports user registration and login, OTP verification, a community forum, a student marketplace, seller messaging, bidding, and persistent user-generated content.
 
-This project currently follows a **client-server architecture**:
-- Backend: Flask (routing, template rendering, form handling)
-- Frontend: Jinja templates + Bootstrap + existing static CSS/JS
-- Data: SQLite (Forum), in-memory list (Marketplace)
-- Email: Flask-Mail (Forum comment notifications)
+---
 
-## 2. Current Folder Structure
+## Purpose of the Application
+
+The purpose of GuildSpace is to provide a central online platform for UWA students to:
+
+* Browse campus-related posts and community notices
+* Create forum posts and comments
+* Buy and sell second-hand items through a marketplace
+* Message sellers about marketplace listings
+* Place bids on pending marketplace items
+* Interact with content created by other students
+
+GuildSpace is designed to be useful, accessible, and focused on the UWA student community.
+
+---
+
+## Main Features
+
+### Authentication
+
+* User registration with UWA student email validation
+* OTP verification after registration
+* Login and logout
+* Password validation
+* Passwords stored as salted hashes using Werkzeug
+* Protected pages that require users to be logged in
+
+### Home Page
+
+* Full-width hero section
+* Clear navigation to Forum, Marketplace, and Register pages
+* Shared navbar and footer using Jinja templates
+* Consistent layout and visual style across the site
+
+### Forum
+
+* Users can create forum posts
+* Users can like and dislike posts
+* Users can comment on posts
+* Forum posts, likes, dislikes, and comments are persisted using SQLite through SQLAlchemy
+
+### Marketplace
+
+* Users can browse marketplace listings
+* Users can create listings with images
+* Users can message sellers
+* Users can place bids on pending items
+* Sellers can view messages and bids
+* Sellers can update listing status
+* Marketplace listings, messages, bids, and status updates are persisted using SQLite through SQLAlchemy
+
+### Security
+
+* CSRF token protection for POST forms
+* Password hashing using Werkzeug
+* UWA student email validation during registration
+* Real mail credentials are excluded from GitHub using ignored local configuration files
+
+---
+
+## Design and Use
+
+GuildSpace uses a Bootstrap-based layout with custom CSS. The visual design uses blue tones inspired by UWA branding and card-based sections to keep the interface clear and easy to use.
+
+The main user flow is:
+
+1. Register with a UWA student email
+2. Verify email using OTP
+3. Login
+4. Use the Forum to create or interact with posts
+5. Use the Marketplace to browse, post listings, message sellers, or place bids
+6. Logout when finished
+
+---
+
+## Group Members
+
+| UWA ID        | Name        | GitHub Username        |
+| ------------- | ----------- | ---------------------- |
+| 24231774 | Nikhil Chadha |  nikhilchadha28 |
+| 23320288 | Zeyu Wang | zeyu-wang-123 |
+| 24732787 | Sanchia Recson Lakkarvi | SanchiaLakkarvi |
+
+---
+
+## Technologies Used
+
+* HTML
+* CSS
+* JavaScript
+* Bootstrap
+* Flask
+* Jinja templates
+* SQLite
+* SQLAlchemy
+* Flask-Mail
+* Pytest
+* Selenium
+
+---
+
+## Project Structure
 
 ```text
-.
+AgileWebDevelopment2026/
+│
 ├── app.py
-├── mail_config.py
-├── data/
-│   └── forum.db
+├── requirements.txt
+├── README.md
+├── TESTING.md
+│
 ├── server/
-│   ├── __init__.py
 │   ├── extensions.py
-│   ├── routes/
-│   │   ├── __init__.py
-│   │   ├── forum.py
-│   │   └── marketplace.py
-│   ├── models/
-│   │   ├── __init__.py
-│   │   └── forum.py
-│   └── utils/
-│       ├── __init__.py
-│       └── mailer.py
+│   └── models/
+│       ├── user.py
+│       ├── post.py
+│       └── marketplace.py
+│
 ├── templates/
 │   ├── base.html
 │   ├── home.html
@@ -39,129 +131,161 @@ This project currently follows a **client-server architecture**:
 │   ├── forum.html
 │   ├── marketplace.html
 │   ├── post_listing.html
-│   └── message_seller.html
-├── src/
-│   ├── components/
-│   │   └── navbar.js
-│   ├── pages/
-│   │   └── Forum/forum.js
-│   ├── styles/
-│   │   ├── global.css
-│   │   ├── homepage.css
-│   │   ├── login.css
-│   │   ├── forum.css
-│   │   └── marketplace.css
-│   ├── uploads/
-│   └── assets/
-└── static/
-    └── images/
+│   ├── message_seller.html
+│   ├── messages.html
+│   └── bids.html
+│
+├── static/
+│   ├── css/
+│   ├── images/
+│   └── pages/
+│
+├── tests/
+│   ├── test_routes.py
+│   └── test_selenium.py
+│
+└── docs/
+    └── testing/
 ```
 
-## 3. Run Locally
+---
 
-### 3.1 Create a virtual environment and install dependencies
+## Setup Instructions
+
+### 1. Clone the repository
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install flask flask-sqlalchemy flask-mail
+git clone https://github.com/SanchiaLakkarvi/AgileWebDevelopment2026.git
+cd AgileWebDevelopment2026
 ```
 
-### 3.2 Start the server
+### 2. Create a virtual environment
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+On Windows:
+
+```bash
+venv\Scripts\activate
+```
+
+### 3. Install dependencies
+
+```bash
+python3 -m pip install -r requirements.txt
+```
+
+### 4. Configure email settings
+
+The real email configuration file is not committed to GitHub for security reasons.
+
+If OTP email sending is configured locally, create a `mail_config.py` file based on `mail_config_example.py`.
+
+For local testing, OTP codes may also be printed in the Flask terminal.
+
+---
+
+## How to Launch the Application
+
+Run the Flask application:
 
 ```bash
 python3 app.py
 ```
 
-Default URL: `http://127.0.0.1:5000`
+Then open the application in a browser:
 
-## 4. Page Entry Points
+```text
+http://127.0.0.1:5000
+```
 
-- Home: `GET /`
-- Login: `GET /login`
-- Register: `GET /register`
-- Forum: `GET /forum`
-- Marketplace: `GET /marketplace`
-
-## 5. Main Route Details
-
-### 5.1 Forum (database-backed)
-
-- `GET /forum`: render forum page
-- `POST /forum/post`: create a post (supports image upload)
-- `POST /forum/<post_id>/like`: like a post
-- `POST /forum/<post_id>/dislike`: dislike a post
-- `POST /forum/<post_id>/comment`: add a comment
-
-Forum data is stored in SQLite: `data/forum.db`.
-
-### 5.2 Marketplace (in-memory data)
-
-- `GET /marketplace`: marketplace page
-- `GET|POST /post-listing`: create a listing
-- `GET /message-seller/<item_id>`: message seller
-- `GET /market-images/<filename>`: serve marketplace images
-
-Current Marketplace items are defined in `server/routes/marketplace.py` (`items` list) and reset on restart.
-
-## 6. Static Assets and Templates
-
-### 6.1 Flask static mapping
-
-In `server/__init__.py`:
-- `static_folder` points to `src`
-- `static_url_path` is `/static`
-
-So template static references use:
-- `{{ url_for('static', filename='styles/forum.css') }}`
-- `{{ url_for('static', filename='components/navbar.js') }}`
-
-### 6.2 Image storage
-
-- Forum user uploads: saved to `src/uploads/`, served as `/static/uploads/...`
-- Marketplace images: stored in `static/images/`, served via `/market-images/...`
-
-## 7. Email Notifications (Forum Comments)
-
-When someone comments on a post, the app attempts to send an email to the post owner if an email address is provided.
-
-Configuration file: `mail_config.py`
-
-Config keys:
-- `MAIL_SERVER`
-- `MAIL_PORT`
-- `MAIL_USE_TLS`
-- `MAIL_USE_SSL`
-- `MAIL_USERNAME`
-- `MAIL_PASSWORD`
-- `MAIL_DEFAULT_SENDER`
-
-> Note: For this course demo, file-based config is allowed. In production, use environment variables.
-
-## 8. Development Conventions
-
-- `app.py` is startup entry only.
-- Put Flask routes in `server/routes/`.
-- Put database models in `server/models/`.
-- Put shared logic (e.g., email) in `server/utils/`.
-- Render pages from `templates/`; `src/pages/*` can be kept as static prototypes, not Flask render entry points.
-
-## 9. FAQ
-
-### 9.1 Why does the page not reflect DB changes?
-
-Check:
-- Server restarted
-- You are operating on `data/forum.db`
-- You are visiting Flask routes (not opening local HTML files directly)
-
-### 9.2 Why is an uploaded image not visible?
-
-Check:
-- Form uses `enctype="multipart/form-data"`
-- File is saved in `src/uploads/`
-- Page references `/static/uploads/...`
+The application will create the local SQLite database automatically if it does not already exist.
 
 ---
 
-For future extension (real login auth, register persistence, OTP, centralized config), continue building in `server/utils/` and `server/models/`.
+## How to Run Unit Tests
+
+Run the unit tests with:
+
+```bash
+python3 -m pytest tests/test_routes.py -v
+```
+
+The unit tests check core Flask route behaviour and password validation.
+
+---
+
+## How to Run Selenium Tests
+
+Selenium tests require a live Flask server.
+
+### Terminal 1: Start the Flask server
+
+```bash
+python3 app.py
+```
+
+
+### Terminal 2: Run Selenium tests
+
+```bash
+python3 -m pytest tests/test_selenium.py -v
+```
+
+The Selenium tests check browser-level behaviour such as login/register page loading and unauthenticated redirects.
+
+---
+
+## Manual Testing Evidence
+
+Manual testing evidence is documented in:
+
+```text
+TESTING.md
+```
+
+Screenshots are stored in:
+
+```text
+docs/testing/
+```
+
+Manual testing covered:
+
+- Register, OTP, login, and logout
+- Homepage navigation
+- Forum post, like, dislike, comment, and persistence
+- Marketplace listing, message, bid, status update, and persistence
+- Two-account buyer/seller flow
+- CSRF-protected form submissions
+
+---
+
+## Notes on Local Data
+
+Local database files and runtime data are ignored by Git and should not be committed.
+
+Ignored local runtime files include:
+
+```text
+data/*.db
+data/marketplace.json
+static/images/uploads/*
+```
+
+This prevents local test data, uploaded files, and runtime database files from being accidentally pushed to GitHub.
+
+---
+
+## Known Future Improvements
+
+Possible future improvements include:
+
+- Adding a simple Profile page
+- Adding a safe Delete Account flow
+- Deciding how forum posts and marketplace listings should behave after account deletion
+- Adding more detailed Selenium tests for logged-in user flows
+- Improving deployment configuration for production use

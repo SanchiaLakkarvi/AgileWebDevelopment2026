@@ -7,11 +7,15 @@
 {% block content %}
 <div data-navbar data-active="{{ active_nav }}"></div>
 
-<div class="register-page container w-50 mx-auto mt-4">
-    <h3 class="text-center mb-4">Register your account</h3>
+<div class="register-page min-vh-100 d-flex justify-content-center align-items-center">
+    
     <p id="message"></p>
-    <form id="register" method="POST" action="{{ url_for('register') }}">
+    <form id="register" class="bg-white bg-opacity-75 p-4 rounded-4 shadow" method="POST" action="{{ url_for('register') }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <h3 class="text-center mb-4">Register your account</h3>
+        <p class="text-center mb-4">Join GuildSpace and connect with your university community.</p>
+
         <div class="mb-3 row">
             <label for="name" class="form-label">Full Name:</label>
             <div class="col">
@@ -53,9 +57,11 @@
         </div>
 
         <button type="submit" class="btn btn-primary w-100">Create account</button>
+
+        <p class="mt-2"> Already Registered? <a href="{{ url_for('login') }}">Login Now</a></p>
+
     </form>
 
-    <p class="mt-2"> Already Registered? <a href="{{ url_for('login') }}">Login Now</a></p>
 
 </div>
 

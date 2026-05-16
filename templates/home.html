@@ -4,7 +4,7 @@
 
 <div data-navbar data-active="{{ active_nav }}"></div>
 
-<header class="hero-section text-white d-flex align-items-center">
+<header class="hero-section home-hero-section text-white d-flex align-items-center">
   <div class="container text-center">
     <h1 class="display-3 fw-bold mb-3">Welcome to GuildSpace</h1>
     <p class="lead mb-4 hero-text">
@@ -110,39 +110,43 @@
       <p class="text-muted">Simple steps to use GuildSpace</p>
     </div>
 
-    <div class="row g-4 text-center">
-      <div class="col-md-4">
-        <div class="step-box shadow-sm h-100">
-          <div class="step-number">1</div>
-          <h5 class="fw-bold mt-3">Sign Up</h5>
-          <p class="text-muted mb-0">
-            Register using your university account to join the platform.
-          </p>
-        </div>
+<div class="row g-4 text-center">
+  <div class="col-md-4">
+    <a href="{{ url_for('register') }}" class="step-box-link">
+      <div class="step-box shadow-sm h-100">
+        <div class="step-number">1</div>
+        <h5 class="fw-bold mt-3">Sign Up</h5>
+        <p class="text-muted mb-0">
+          Register using your university account to join the platform.
+        </p>
       </div>
-
-      <div class="col-md-4">
-        <div class="step-box shadow-sm h-100">
-          <div class="step-number">2</div>
-          <h5 class="fw-bold mt-3">Browse or Post</h5>
-          <p class="text-muted mb-0">
-            Explore posts or create your own listing in the relevant section.
-          </p>
-        </div>
-      </div>
-
-      <div class="col-md-4">
-        <div class="step-box shadow-sm h-100">
-          <div class="step-number">3</div>
-          <h5 class="fw-bold mt-3">Connect</h5>
-          <p class="text-muted mb-0">
-            Interact with other students and respond to useful posts.
-          </p>
-        </div>
-      </div>
-    </div>
+    </a>
   </div>
-</section>
+
+  <div class="col-md-4">
+    <a href="{{ url_for('marketplace') }}" class="step-box-link">
+      <div class="step-box shadow-sm h-100">
+        <div class="step-number">2</div>
+        <h5 class="fw-bold mt-3">Browse or Post</h5>
+        <p class="text-muted mb-0">
+          Explore posts or create your own listing in the relevant section.
+        </p>
+      </div>
+    </a>
+  </div>
+
+  <div class="col-md-4">
+    <a href="{{ url_for('forum') }}" class="step-box-link">
+      <div class="step-box shadow-sm h-100">
+        <div class="step-number">3</div>
+        <h5 class="fw-bold mt-3">Connect</h5>
+        <p class="text-muted mb-0">
+          Interact with other students and respond to useful posts.
+        </p>
+      </div>
+    </a>
+  </div>
+</div>
 
 <section class="py-5 bg-light">
   <div class="container">
@@ -201,14 +205,11 @@
     <p class="mb-4">
       Browse posts, reconnect with lost belongings, and buy or sell items within the UWA community.
     </p>
-    <a href="{{ url_for('login') }}" class="btn btn-light btn-lg px-4">Get Started</a>
+    <a href="{{ url_for('marketplace') if logged_in else url_for('register') }}" class="btn btn-light btn-lg px-4">
+  Get Started
+</a>
   </div>
 </section>
 
-<footer class="py-4 footer-section text-center">
-  <div class="container">
-    <p class="mb-1 fw-bold">GuildSpace</p>
-    <p class="mb-0 text-muted">Agile Web Development 2026 · UWA Community Platform</p>
-  </div>
-</footer>
+
 {% endblock %}

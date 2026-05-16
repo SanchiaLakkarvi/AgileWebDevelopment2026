@@ -1,4 +1,4 @@
-import os, random
+import os, random, json, re
 from flask_mail import Message
 from datetime import datetime
 from pathlib import Path
@@ -240,6 +240,47 @@ If anyone has picked it up, please let me know. I'd really appreciate it!""",
     }
 ]
 
+def seed_forum_demo_posts():
+    """Seed demo forum posts into SQLite once if the forum table is empty."""
+    if ForumPost.query.first():
+        return
+
+    for demo_post in posts:
+        post = ForumPost(
+            author=demo_post.get("author", "Anonymous"),
+            author_email=demo_post.get("author_email", ""),
+            title=demo_post.get("title", ""),
+            content=demo_post.get("content", ""),
+            category=demo_post.get("category", "Study"),
+            image_url=demo_post.get("image_url", ""),
+            likes=demo_post.get("likes", 0),
+            dislikes=demo_post.get("dislikes", 0),
+        )
+
+        if hasattr(post, "created_at"):
+            post.created_at = demo_post.get("created_at") or datetime.utcnow()
+
+        db.session.add(post)
+        db.session.flush()
+
+        for demo_comment in demo_post.get("comments", []):
+            comment = ForumComment(
+                post_id=post.id,
+                author=demo_comment.get("author", "You"),
+                text=demo_comment.get("text", ""),
+            )
+
+            if hasattr(comment, "created_at"):
+                comment.created_at = demo_comment.get("created_at") or datetime.utcnow()
+
+            db.session.add(comment)
+
+    db.session.commit()
+
+
+with app.app_context():
+    seed_forum_demo_posts()
+
 items = [
     {
         "id": 1,
@@ -346,6 +387,44 @@ bids = [
 ]
 
 
+MARKETPLACE_DATA_FILE = DATA_DIR / "marketplace.json"
+
+
+def load_marketplace_data():
+    """Load marketplace listings, messages and bids from JSON if available."""
+    global items, messages, bids
+
+    if not MARKETPLACE_DATA_FILE.exists():
+        save_marketplace_data()
+        return
+
+    try:
+        with open(MARKETPLACE_DATA_FILE, "r", encoding="utf-8") as file:
+            data = json.load(file)
+
+        items = data.get("items", items)
+        messages = data.get("messages", messages)
+        bids = data.get("bids", bids)
+
+    except (OSError, json.JSONDecodeError):
+        save_marketplace_data()
+
+
+def save_marketplace_data():
+    """Save marketplace listings, messages and bids to JSON."""
+    data = {
+        "items": items,
+        "messages": messages,
+        "bids": bids,
+    }
+
+    with open(MARKETPLACE_DATA_FILE, "w", encoding="utf-8") as file:
+        json.dump(data, file, indent=4)
+
+
+load_marketplace_data()
+
+
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
@@ -353,12 +432,42 @@ def allowed_file(filename):
 def get_item(item_id):
     return next((item for item in items if item["id"] == item_id), None)
 
+def get_forum_post(post_id):
+    return next((post for post in posts if post["id"] == post_id), None)
 
-def is_owner(item):
-    return item and item.get("seller") == CURRENT_USER
 
 def logged_in():
     return "user_id" in session
+
+
+def current_user_name():
+    return session.get("user_name", CURRENT_USER)
+
+
+def current_user_first_name():
+    name = session.get("user_name", "")
+    return name.split()[0] if name else CURRENT_USER
+
+
+def current_user_email():
+    return session.get("user_email", "")
+
+def valid_password(password):
+    if len(password) < 8:
+        return False
+    if not re.search(r"\d", password):
+        return False
+    if not re.search(r"[A-z]", password):
+        return False
+    if not re.search(r"[a-z]", password):
+        return False
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+        return False
+    return True
+
+
+def is_owner(item):
+    return item and item.get("seller") == current_user_first_name()
 
 def create_otp():
     return str(random.randint(100000,999999))
@@ -375,8 +484,18 @@ def create_csrf_token():
 
 @app.context_processor
 def inject_common_data():
-    unread_count = len([message for message in messages if message.get("seller") == CURRENT_USER and not message.get("read")])
-    own_bid_count = len([bid for bid in bids if bid.get("seller") == CURRENT_USER])
+    current_user = current_user_first_name()
+
+    unread_count = len([
+        message for message in messages
+        if message.get("seller") == current_user and not message.get("read")
+    ])
+
+    own_bid_count = len([
+        bid for bid in bids
+        if bid.get("seller") == current_user
+    ])
+
     return {
         "logged_in": "user_id" in session,
         "logged_in_user": session.get("user_name"),
@@ -384,7 +503,7 @@ def inject_common_data():
         "own_bid_count": own_bid_count,
         "categories": CATEGORIES,
         "statuses": STATUSES,
-        "current_user": CURRENT_USER,
+        "current_user": current_user,
         "csrf_token": create_csrf_token,
     }
 
@@ -415,45 +534,67 @@ def forum():
     if not logged_in():
         flash("Please login first.")
         return redirect(url_for("login"))
-    return render_template("forum.html", posts=posts, active_nav="forum")
+
+    forum_posts = ForumPost.query.order_by(ForumPost.created_at.desc()).all()
+
+    return render_template(
+        "forum.html",
+        posts=forum_posts,
+        active_nav="forum"
+    )
 
 @app.route("/forum/post", methods=["POST"])
 def create_post():
+    if not logged_in():
+        flash("Please login first.")
+        return redirect(url_for("login"))
+
+    author = request.form.get("author", "").strip() or session.get("user_name", "Anonymous")
+    author_email = request.form.get("author_email", "").strip()
+    title = request.form.get("title", "").strip()
+    content = request.form.get("content", "").strip()
+    category = request.form.get("category", "Study").strip()
+
+    if not title or not content or not category:
+        flash("Please fill in all required fields.", "danger")
+        return redirect(url_for("forum"))
+
     image_url = ""
     image_file = request.files.get("image_file")
 
     if image_file and image_file.filename:
-        if allowed_file(image_file.filename):
-            safe_name = secure_filename(image_file.filename)
-            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-            saved_name = f"{timestamp}_{safe_name}"
-
-            upload_dir = Path(app.static_folder or (BASE_DIR / "static")) / "assets" / "images" / "uploads"
-            upload_dir.mkdir(parents=True, exist_ok=True)
-
-            image_file.save(upload_dir / saved_name)
-            image_url = url_for("static", filename=f"assets/images/uploads/{saved_name}")
-        else:
-            flash("Please upload a valid image file: png, jpg, jpeg, gif, or webp.")
+        if not allowed_file(image_file.filename):
+            flash("Please upload a valid image file: png, jpg, jpeg, gif, or webp.", "danger")
             return redirect(url_for("forum"))
 
-    new_post = {
-        "id": len(posts) + 1,
-        "author": request.form.get("author", "Anonymous").strip() or "Anonymous",
-        "author_email": request.form.get("author_email", "").strip(),
-        "title": request.form.get("title", "").strip(),
-        "content": request.form.get("content", "").strip(),
-        "category": request.form.get("category", "Study"),
-        "image_url": image_url,
-        "created_at": datetime.utcnow(),
-        "likes": 0,
-        "dislikes": 0,
-        "comments": []
-    }
+        safe_name = secure_filename(image_file.filename)
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        filename = f"{timestamp}_{safe_name}"
 
-    posts.insert(0, new_post)
-    flash("Post published.")
-    return redirect(url_for("forum"))
+        image_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+        image_file.save(image_path)
+
+        image_url = url_for("static", filename=f"images/uploads/{filename}")
+
+    new_post = ForumPost(
+        author=author,
+        author_email=author_email,
+        title=title,
+        content=content,
+        category=category,
+        image_url=image_url,
+        likes=0,
+        dislikes=0,
+    )
+
+    if hasattr(new_post, "user_id"):
+        new_post.user_id = session.get("user_id")
+
+    db.session.add(new_post)
+    db.session.commit()
+
+    flash("Post published successfully.", "success")
+    return redirect(url_for("forum", _anchor=f"post-{new_post.id}"))
 
 
 @app.route("/forum/<int:post_id>/like", methods=["POST"])
@@ -463,10 +604,10 @@ def like_post(post_id):
         return redirect(url_for("login"))
 
     post = ForumPost.query.get_or_404(post_id)
-    post.likes += 1
+    post.likes = int(post.likes or 0) + 1
     db.session.commit()
 
-    return redirect(url_for("forum"))
+    return redirect(url_for("forum", _anchor=f"post-{post_id}"))
 
 @app.context_processor
 def inject_forum_helpers():
@@ -507,10 +648,10 @@ def dislike_post(post_id):
         return redirect(url_for("login"))
 
     post = ForumPost.query.get_or_404(post_id)
-    post.dislikes += 1
+    post.dislikes = int(post.dislikes or 0) + 1
     db.session.commit()
 
-    return redirect(url_for("forum"))
+    return redirect(url_for("forum", _anchor=f"post-{post_id}"))
 
 
 @app.route("/forum/<int:post_id>/comment", methods=["POST"])
@@ -524,20 +665,22 @@ def add_comment(post_id):
 
     if not text:
         flash("Comment cannot be empty.", "danger")
-        return redirect(url_for("forum"))
+        return redirect(url_for("forum", _anchor=f"post-{post_id}"))
 
     comment = ForumComment(
         post_id=post.id,
         text=text,
         author=session.get("user_name", "You"),
-        user_id=session.get("user_id")
     )
+
+    if hasattr(comment, "user_id"):
+        comment.user_id = session.get("user_id")
 
     db.session.add(comment)
     db.session.commit()
 
     flash("Comment added.", "success")
-    return redirect(url_for("forum"))
+    return redirect(url_for("forum", _anchor=f"post-{post_id}"))
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -582,6 +725,10 @@ def register():
 
         if not email.endswith("@student.uwa.edu.au"):
             flash("Please use your UWA student email.")
+            return redirect(url_for("register"))
+        
+        if not valid_password(password):
+            flash("Password must be atleast 8 characters long and include lowercase, uppercase, number and a special character.")
             return redirect(url_for("register"))
 
         if password != confirm_password:
@@ -722,13 +869,14 @@ def post_listing():
             "title": request.form["title"],
             "price": int(request.form["price"]),
             "image": image_name,
-            "seller": CURRENT_USER,
+            "seller": current_user_first_name(),
             "time": "Just now",
             "category": category,
             "status": "Active",
             "description": request.form["description"]
         }
         items.insert(0, new_item)
+        save_marketplace_data()
         flash("Listing posted successfully.")
         return redirect(url_for("marketplace"))
 
@@ -760,12 +908,13 @@ def message_seller(item_id):
             "item_id": selected_item["id"],
             "item_title": selected_item["title"],
             "seller": selected_item["seller"],
-            "buyer_name": request.form["name"],
-            "buyer_email": request.form["email"],
+            "buyer_name": request.form.get("name", "").strip() or current_user_name(),
+            "buyer_email": request.form.get("email", "").strip() or current_user_email(),
             "message": request.form["message"],
             "time": datetime.now().strftime("%d %b, %I:%M %p"),
             "read": False
         })
+        save_marketplace_data()
         flash("Message sent successfully.")
         return redirect(url_for("marketplace"))
 
@@ -777,6 +926,7 @@ def place_bid(item_id):
     if not logged_in():
         flash("Please login first.")
         return redirect(url_for("login"))
+
     selected_item = get_item(item_id)
 
     if not selected_item:
@@ -796,11 +946,13 @@ def place_bid(item_id):
         "item_id": selected_item["id"],
         "item_title": selected_item["title"],
         "seller": selected_item["seller"],
-        "buyer_name": request.form["buyer_name"],
-        "buyer_email": request.form["buyer_email"],
+        "buyer_name": request.form.get("buyer_name", "").strip() or current_user_name(),
+        "buyer_email": request.form.get("buyer_email", "").strip() or current_user_email(),
         "bid_amount": request.form["bid_amount"],
         "time": datetime.now().strftime("%d %b, %I:%M %p")
     })
+    save_marketplace_data()
+
     flash("Bid placed successfully.")
     return redirect(url_for("marketplace"))
 
@@ -826,6 +978,7 @@ def update_listing_status(item_id):
         return redirect(url_for("marketplace"))
 
     selected_item["status"] = new_status
+    save_marketplace_data()
     flash(selected_item["title"] + " status changed to " + new_status + ".")
     return redirect(request.referrer or url_for("marketplace"))
 
@@ -835,9 +988,13 @@ def view_messages():
     if not logged_in():
         flash("Please login first.")
         return redirect(url_for("login"))
-    own_messages = [message for message in messages if message.get("seller") == CURRENT_USER]
+    own_messages = [
+    message for message in messages
+    if message.get("seller") == current_user_first_name()
+]
     for message in own_messages:
         message["read"] = True
+    save_marketplace_data()
     return render_template("messages.html", messages=own_messages)
 
 
@@ -846,7 +1003,10 @@ def view_bids():
     if not logged_in():
         flash("Please login first.")
         return redirect(url_for("login"))
-    own_bids = [bid for bid in bids if bid.get("seller") == CURRENT_USER]
+    own_bids = [
+    bid for bid in bids
+    if bid.get("seller") == current_user_first_name()
+]
     return render_template("bids.html", bids=own_bids)
 
 @app.route("/logout")

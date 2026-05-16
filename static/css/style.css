@@ -743,3 +743,16 @@ body {
     z-index: 2990 !important;
     pointer-events: none !important;
 }
+
+.login-page {
+    background-image: url("/static/images/login-background/login-bg.jpeg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    padding: 60px 20px;
+}
+
+.login-page form {
+    max-width: 420px;
+    margin: 0 auto;
+}

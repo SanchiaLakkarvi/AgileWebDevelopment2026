@@ -763,3 +763,10 @@ body {
     background-position: center;
     background-repeat: no-repeat;
 }
+
+.profile-page {
+    background-image: url("/static/images/login-background/login-bg.jpeg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}

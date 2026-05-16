@@ -435,7 +435,12 @@ def create_otp():
     return str(random.randint(100000,999999))
 
 def send_otp(email, otp):
-    print(f"OTP for {email}: {otp}")
+    msg = Message(
+            subject="OTP for Verification",
+            recipients=[email],
+            body="Your one time password (OTP) to login to your GuildSpace account securely is :"+ str(otp)
+        )
+    mail.send(msg)
     return True
 
 def create_csrf_token():
@@ -658,7 +663,7 @@ def login():
             return redirect(url_for("login"))
         
         if not user.is_verified:
-            flash("Account not verified, please verify before logging in.")
+            flash("Account not verified. A new OTP has been sent to your email, please verify first!")
             return redirect(url_for("otp_verification", email=user.email))
         
         # This will keep the login session until we logout
@@ -770,6 +775,21 @@ def otp_verification():
         return redirect(url_for("login"))
 
     return render_template("otp_verification.html", email=email)
+
+@app.route("/resend-otp")
+def resend_otp():
+    email = request.args.get("email", "").strip().lower()
+    user = User.query.filter_by(email=email).first()
+
+    otp = create_otp()
+    user.otp_number = otp
+    user.otp_generation_time = datetime.now()
+    db.session.commit()
+
+    send_otp(email, otp)
+
+    flash("New OTP sent to your email.")
+    return redirect(url_for("otp_verification", email=email))
 
 
 @app.route("/marketplace")
@@ -966,6 +986,21 @@ def view_bids():
 ]
     return render_template("bids.html", bids=own_bids)
 
+@app.route("/profile")
+def profile():
+    if not logged_in():
+        flash("Please login first")
+        return redirect(url_for("login"))
+    
+    user = User.query.get(session["user_id"])
+    
+    if not user:
+        session.clear()
+        flash("User account not found. Please login again.")
+        return redirect(url_for("login"))
+
+    return render_template("profile.html", user=user)
+
 @app.route("/logout")
 def logout():
     if not logged_in():
@@ -973,6 +1008,28 @@ def logout():
         return redirect(url_for("login"))
     session.clear()
     flash("Logged out successfully.")
+    return redirect(url_for("login"))
+
+@app.route("/delete-account", methods=["POST"])
+def remove_account():
+    if not logged_in():
+        flash("Please login first.")
+        return redirect(url_for("login"))
+
+    user = User.query.get(session["user_id"])
+
+    if not user:
+        session.clear()
+        flash("User account not found. Please login again.")
+        return redirect(url_for("login"))
+    
+    password = request.form.get("password", "")
+
+    db.session.delete(user)
+    db.session.commit()
+
+    session.clear()
+    flash("Account deleted successfully. You can join anytime again.")
     return redirect(url_for("login"))
 
 

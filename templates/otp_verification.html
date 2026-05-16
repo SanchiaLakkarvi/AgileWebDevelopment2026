@@ -7,16 +7,16 @@
 {% block content %}
 <div data-navbar data-active="{{ active_nav }}"></div>
 
-<div class="register-page container w-50 mx-auto mt-4">
-    <h3 class="text-center mb-4">Verify your email</h3>
+<div class="register-page min-vh-100 d-flex justify-content-center align-items-center">
 
-    <p class="text-center">
-        We have sent a 6-digit OTP to your entered student email.
-    </p>
 
-    <form id="otp-page" method="POST" action="{{ url_for('otp_verification') }}">
+    <form id="otp-page " class="bg-white bg-opacity-75 p-4 rounded-4 shadow" method="POST" action="{{ url_for('otp_verification') }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="email" value="{{ email }}">
+
+        <h3 class="text-center mb-4">Verify your email</h3>
+
+        <p class="text-center mb-4">We have sent a 6-digit OTP to your entered student email.</p>
 
         <div class="mb-3">
             <label for="otp" class="form-label">Enter OTP:</label>
@@ -24,11 +24,11 @@
         </div>
 
         <button type="submit" class="btn btn-primary w-100">Submit OTP</button>
+
+        <p class="text-center mt-3">Didn't receive OTP? <a href="{{ url_for('resend_otp', email=email) }}">Resend OTP</a></p>
+
     </form>
 
-    <p class="mt-2">
-        Already verified? <a href="{{ url_for('login') }}">Login Now</a>
-    </p>
 </div>
 
 {% endblock %}

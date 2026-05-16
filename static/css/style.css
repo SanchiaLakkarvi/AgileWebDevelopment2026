@@ -769,8 +769,6 @@ body {
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-}
-
 /* Home page full-width hero and clickable step cards */
 .home-hero-section {
     width: 100vw;
@@ -807,4 +805,5 @@ body {
 
 .step-box-link:hover .step-box {
     transform: translateY(-6px);
+    box-shadow: 0 10px 24px rgba(37, 99, 235, 0.16);
 }

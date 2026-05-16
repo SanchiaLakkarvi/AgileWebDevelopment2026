@@ -1,4 +1,4 @@
-import os, random, re
+import os, random, json, re
 from flask_mail import Message
 from datetime import datetime
 from pathlib import Path
@@ -385,6 +385,44 @@ bids = [
         "time": "29 Apr, 07:30 PM"
     }
 ]
+
+
+MARKETPLACE_DATA_FILE = DATA_DIR / "marketplace.json"
+
+
+def load_marketplace_data():
+    """Load marketplace listings, messages and bids from JSON if available."""
+    global items, messages, bids
+
+    if not MARKETPLACE_DATA_FILE.exists():
+        save_marketplace_data()
+        return
+
+    try:
+        with open(MARKETPLACE_DATA_FILE, "r", encoding="utf-8") as file:
+            data = json.load(file)
+
+        items = data.get("items", items)
+        messages = data.get("messages", messages)
+        bids = data.get("bids", bids)
+
+    except (OSError, json.JSONDecodeError):
+        save_marketplace_data()
+
+
+def save_marketplace_data():
+    """Save marketplace listings, messages and bids to JSON."""
+    data = {
+        "items": items,
+        "messages": messages,
+        "bids": bids,
+    }
+
+    with open(MARKETPLACE_DATA_FILE, "w", encoding="utf-8") as file:
+        json.dump(data, file, indent=4)
+
+
+load_marketplace_data()
 
 
 def allowed_file(filename):
@@ -838,6 +876,7 @@ def post_listing():
             "description": request.form["description"]
         }
         items.insert(0, new_item)
+        save_marketplace_data()
         flash("Listing posted successfully.")
         return redirect(url_for("marketplace"))
 
@@ -875,6 +914,7 @@ def message_seller(item_id):
             "time": datetime.now().strftime("%d %b, %I:%M %p"),
             "read": False
         })
+        save_marketplace_data()
         flash("Message sent successfully.")
         return redirect(url_for("marketplace"))
 
@@ -911,6 +951,7 @@ def place_bid(item_id):
         "bid_amount": request.form["bid_amount"],
         "time": datetime.now().strftime("%d %b, %I:%M %p")
     })
+    save_marketplace_data()
 
     flash("Bid placed successfully.")
     return redirect(url_for("marketplace"))
@@ -937,6 +978,7 @@ def update_listing_status(item_id):
         return redirect(url_for("marketplace"))
 
     selected_item["status"] = new_status
+    save_marketplace_data()
     flash(selected_item["title"] + " status changed to " + new_status + ".")
     return redirect(request.referrer or url_for("marketplace"))
 
@@ -952,6 +994,7 @@ def view_messages():
 ]
     for message in own_messages:
         message["read"] = True
+    save_marketplace_data()
     return render_template("messages.html", messages=own_messages)
 
 

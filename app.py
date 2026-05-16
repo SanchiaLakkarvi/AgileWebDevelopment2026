@@ -1025,6 +1025,10 @@ def remove_account():
     
     password = request.form.get("password", "")
 
+    if not user.check_password(password):
+        flash("Incorrect password. Try again later.")
+        return redirect(url_for("profile"))
+
     db.session.delete(user)
     db.session.commit()
 
@@ -1035,4 +1039,3 @@ def remove_account():
 
 if __name__ == "__main__":
     app.run(debug=True)
-

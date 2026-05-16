@@ -7,26 +7,30 @@
 {% block content %}
 <div data-navbar data-active="{{ active_nav }}"></div>
 
-<div class="login-page ">
-  <h3 class="text-center mb-4">Welcome back</h3>
+<div class="login-page min-vh-100 d-flex flex-column justify-content-center align-items-center"">
   <p id="message"></p>
 
-  <form id="login" method="POST" action="{{ url_for('login') }}">
+  <form id="login" class="bg-white bg-opacity-75 p-4 rounded-4 shadow" method="POST" action="{{ url_for('login') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <h3 class="text-center mb-4">Welcome back</h3>
+    <p class="text-center mb-4">Please login to continue!</p>
+
     <div class="mb-3">
       <label for="email" class="form-label">Email ID:</label>
-      <input type="email" id="email" placeholder="Enter your student email id" name="email" class="form-control" required>
+      <input type="email" id="email" placeholder="Enter your student email id" name="email" class="form-control form-control-lg mb-3" required>
     </div>
 
     <div class="mb-3">
       <label for="password" class="form-label">Password:</label>
-      <input type="password" id="password" placeholder="Enter your password" name="password" class="form-control" required>
+      <input type="password" id="password" placeholder="Enter your password" name="password" class="form-control form-control-lg mb-3" required>
     </div>
 
-    <button type="submit" class="btn btn-primary w-100">Login</button>
-  </form>
+    <button type="submit" class="btn btn-primary btn-lg w-100">Login</button>
+    
+    <p class="mt-2">Need a account? <a href="{{ url_for('register') }}">Register</a></p>
 
-  <p class="mt-2">Need a account? <a href="{{ url_for('register') }}">Register</a></p>
+  </form>
 
 </div>
 

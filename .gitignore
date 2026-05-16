@@ -218,3 +218,4 @@ data/*.db
 static/images/uploads/*
 !static/images/uploads/.gitkeepdata/marketplace.json
 data/marketplace.json
+data/marketplace.json

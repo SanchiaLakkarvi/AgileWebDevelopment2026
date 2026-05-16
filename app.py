@@ -7,6 +7,7 @@ from werkzeug.utils import secure_filename
 from flask import Flask, render_template, request, redirect, url_for, flash, session, abort
 from server.extensions import db, mail
 from server.models.user import User
+from server.models.marketplace import MarketplaceItem, MarketplaceMessage, MarketplaceBid
 from server.models.post import ForumPost, ForumComment
 
 app = Flask(__name__)
@@ -387,42 +388,48 @@ bids = [
 ]
 
 
-MARKETPLACE_DATA_FILE = DATA_DIR / "marketplace.json"
-
-
-def load_marketplace_data():
-    """Load marketplace listings, messages and bids from JSON if available."""
-    global items, messages, bids
-
-    if not MARKETPLACE_DATA_FILE.exists():
-        save_marketplace_data()
+def seed_marketplace_demo_data():
+    """Seed demo marketplace listings and bids into SQLite once."""
+    if MarketplaceItem.query.first():
         return
 
-    try:
-        with open(MARKETPLACE_DATA_FILE, "r", encoding="utf-8") as file:
-            data = json.load(file)
+    item_lookup = {}
 
-        items = data.get("items", items)
-        messages = data.get("messages", messages)
-        bids = data.get("bids", bids)
+    for demo_item in items:
+        item = MarketplaceItem(
+            title=demo_item.get("title", ""),
+            price=demo_item.get("price", 0),
+            image=demo_item.get("image", "placeholder-other.svg"),
+            seller=demo_item.get("seller", "Unknown"),
+            time=demo_item.get("time", "Just now"),
+            category=demo_item.get("category", "Other"),
+            status=demo_item.get("status", "Active"),
+            description=demo_item.get("description", "")
+        )
+        db.session.add(item)
+        db.session.flush()
+        item_lookup[item.title] = item
 
-    except (OSError, json.JSONDecodeError):
-        save_marketplace_data()
+    for demo_bid in bids:
+        linked_item = item_lookup.get(demo_bid.get("item_title"))
+
+        if linked_item:
+            bid = MarketplaceBid(
+                item_id=linked_item.id,
+                item_title=linked_item.title,
+                seller=demo_bid.get("seller", linked_item.seller),
+                buyer_name=demo_bid.get("buyer_name", "Buyer"),
+                buyer_email=demo_bid.get("buyer_email", ""),
+                bid_amount=demo_bid.get("bid_amount", ""),
+                time=demo_bid.get("time", "Just now")
+            )
+            db.session.add(bid)
+
+    db.session.commit()
 
 
-def save_marketplace_data():
-    """Save marketplace listings, messages and bids to JSON."""
-    data = {
-        "items": items,
-        "messages": messages,
-        "bids": bids,
-    }
-
-    with open(MARKETPLACE_DATA_FILE, "w", encoding="utf-8") as file:
-        json.dump(data, file, indent=4)
-
-
-load_marketplace_data()
+with app.app_context():
+    seed_marketplace_demo_data()
 
 
 def allowed_file(filename):
@@ -430,7 +437,7 @@ def allowed_file(filename):
 
 
 def get_item(item_id):
-    return next((item for item in items if item["id"] == item_id), None)
+    return MarketplaceItem.query.get(item_id)
 
 def get_forum_post(post_id):
     return next((post for post in posts if post["id"] == post_id), None)
@@ -467,7 +474,7 @@ def valid_password(password):
 
 
 def is_owner(item):
-    return item and item.get("seller") == current_user_first_name()
+    return item and item.seller == current_user_first_name()
 
 def create_otp():
     return str(random.randint(100000,999999))
@@ -486,16 +493,14 @@ def create_csrf_token():
 def inject_common_data():
     current_user = current_user_first_name()
 
-    unread_count = len([
-        message for message in messages
-        if message.get("seller") == current_user and not message.get("read")
-    ])
+    unread_count = MarketplaceMessage.query.filter_by(
+        seller=current_user,
+        read=False
+    ).count()
 
-    own_bid_count = len([
-        bid for bid in bids
-        if bid.get("seller") == current_user
-    ])
-
+    own_bid_count = MarketplaceBid.query.filter_by(
+        seller=current_user
+    ).count()
     return {
         "logged_in": "user_id" in session,
         "logged_in_user": session.get("user_name"),
@@ -815,21 +820,23 @@ def marketplace():
     if not logged_in():
         flash("Please login first.")
         return redirect(url_for("login"))
+
     selected_category = request.args.get("category", "All")
     search_query = request.args.get("q", "").strip().lower()
 
-    filtered_items = items
+    all_items = MarketplaceItem.query.order_by(MarketplaceItem.created_at.desc()).all()
+    filtered_items = all_items
 
     if selected_category != "All":
-        filtered_items = [item for item in filtered_items if item["category"] == selected_category]
+        filtered_items = [item for item in filtered_items if item.category == selected_category]
 
     if search_query:
         filtered_items = [
             item for item in filtered_items
-            if search_query in item["title"].lower()
-            or search_query in item["seller"].lower()
-            or search_query in item["category"].lower()
-            or search_query in item["description"].lower()
+            if search_query in item.title.lower()
+            or search_query in item.seller.lower()
+            or search_query in item.category.lower()
+            or search_query in item.description.lower()
         ]
 
     return render_template(
@@ -845,6 +852,7 @@ def post_listing():
     if not logged_in():
         flash("Please login first.")
         return redirect(url_for("login"))
+
     if request.method == "POST":
         image_file = request.files.get("image")
         image_name = "placeholder-other.svg"
@@ -864,19 +872,20 @@ def post_listing():
             flash("Please choose a valid category.")
             return redirect(url_for("post_listing"))
 
-        new_item = {
-            "id": max(item["id"] for item in items) + 1 if items else 1,
-            "title": request.form["title"],
-            "price": int(request.form["price"]),
-            "image": image_name,
-            "seller": current_user_first_name(),
-            "time": "Just now",
-            "category": category,
-            "status": "Active",
-            "description": request.form["description"]
-        }
-        items.insert(0, new_item)
-        save_marketplace_data()
+        new_item = MarketplaceItem(
+            title=request.form["title"],
+            price=int(request.form["price"]),
+            image=image_name,
+            seller=current_user_first_name(),
+            time="Just now",
+            category=category,
+            status="Active",
+            description=request.form["description"]
+        )
+
+        db.session.add(new_item)
+        db.session.commit()
+
         flash("Listing posted successfully.")
         return redirect(url_for("marketplace"))
 
@@ -888,6 +897,7 @@ def message_seller(item_id):
     if not logged_in():
         flash("Please login first.")
         return redirect(url_for("login"))
+
     selected_item = get_item(item_id)
 
     if not selected_item:
@@ -898,23 +908,25 @@ def message_seller(item_id):
         flash("You cannot message yourself for your own listing.")
         return redirect(url_for("marketplace"))
 
-    if selected_item["status"] == "Sold":
+    if selected_item.status == "Sold":
         flash("This listing is sold, so messages are closed.")
         return redirect(url_for("marketplace"))
 
     if request.method == "POST":
-        messages.insert(0, {
-            "id": len(messages) + 1,
-            "item_id": selected_item["id"],
-            "item_title": selected_item["title"],
-            "seller": selected_item["seller"],
-            "buyer_name": request.form.get("name", "").strip() or current_user_name(),
-            "buyer_email": request.form.get("email", "").strip() or current_user_email(),
-            "message": request.form["message"],
-            "time": datetime.now().strftime("%d %b, %I:%M %p"),
-            "read": False
-        })
-        save_marketplace_data()
+        message = MarketplaceMessage(
+            item_id=selected_item.id,
+            item_title=selected_item.title,
+            seller=selected_item.seller,
+            buyer_name=request.form.get("name", "").strip() or current_user_name(),
+            buyer_email=request.form.get("email", "").strip() or current_user_email(),
+            message=request.form["message"],
+            time=datetime.now().strftime("%d %b, %I:%M %p"),
+            read=False
+        )
+
+        db.session.add(message)
+        db.session.commit()
+
         flash("Message sent successfully.")
         return redirect(url_for("marketplace"))
 
@@ -937,21 +949,22 @@ def place_bid(item_id):
         flash("You cannot place a bid on your own listing.")
         return redirect(url_for("marketplace"))
 
-    if selected_item["status"] != "Pending":
+    if selected_item.status != "Pending":
         flash("Bids are only open when a listing is Pending.")
         return redirect(url_for("marketplace"))
 
-    bids.insert(0, {
-        "id": len(bids) + 1,
-        "item_id": selected_item["id"],
-        "item_title": selected_item["title"],
-        "seller": selected_item["seller"],
-        "buyer_name": request.form.get("buyer_name", "").strip() or current_user_name(),
-        "buyer_email": request.form.get("buyer_email", "").strip() or current_user_email(),
-        "bid_amount": request.form["bid_amount"],
-        "time": datetime.now().strftime("%d %b, %I:%M %p")
-    })
-    save_marketplace_data()
+    bid = MarketplaceBid(
+        item_id=selected_item.id,
+        item_title=selected_item.title,
+        seller=selected_item.seller,
+        buyer_name=request.form.get("buyer_name", "").strip() or current_user_name(),
+        buyer_email=request.form.get("buyer_email", "").strip() or current_user_email(),
+        bid_amount=request.form["bid_amount"],
+        time=datetime.now().strftime("%d %b, %I:%M %p")
+    )
+
+    db.session.add(bid)
+    db.session.commit()
 
     flash("Bid placed successfully.")
     return redirect(url_for("marketplace"))
@@ -962,6 +975,7 @@ def update_listing_status(item_id):
     if not logged_in():
         flash("Please login first.")
         return redirect(url_for("login"))
+
     selected_item = get_item(item_id)
 
     if not selected_item:
@@ -977,9 +991,10 @@ def update_listing_status(item_id):
         flash("Invalid listing status.")
         return redirect(url_for("marketplace"))
 
-    selected_item["status"] = new_status
-    save_marketplace_data()
-    flash(selected_item["title"] + " status changed to " + new_status + ".")
+    selected_item.status = new_status
+    db.session.commit()
+
+    flash(selected_item.title + " status changed to " + new_status + ".")
     return redirect(request.referrer or url_for("marketplace"))
 
 
@@ -988,13 +1003,16 @@ def view_messages():
     if not logged_in():
         flash("Please login first.")
         return redirect(url_for("login"))
-    own_messages = [
-    message for message in messages
-    if message.get("seller") == current_user_first_name()
-]
+
+    own_messages = MarketplaceMessage.query.filter_by(
+        seller=current_user_first_name()
+    ).order_by(MarketplaceMessage.created_at.desc()).all()
+
     for message in own_messages:
-        message["read"] = True
-    save_marketplace_data()
+        message.read = True
+
+    db.session.commit()
+
     return render_template("messages.html", messages=own_messages)
 
 
@@ -1003,10 +1021,11 @@ def view_bids():
     if not logged_in():
         flash("Please login first.")
         return redirect(url_for("login"))
-    own_bids = [
-    bid for bid in bids
-    if bid.get("seller") == current_user_first_name()
-]
+
+    own_bids = MarketplaceBid.query.filter_by(
+        seller=current_user_first_name()
+    ).order_by(MarketplaceBid.created_at.desc()).all()
+
     return render_template("bids.html", bids=own_bids)
 
 @app.route("/logout")

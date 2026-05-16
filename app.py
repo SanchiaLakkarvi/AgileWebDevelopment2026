@@ -1,4 +1,4 @@
-import os, random
+import os, random, re
 from flask_mail import Message
 from datetime import datetime
 from pathlib import Path
@@ -414,6 +414,19 @@ def current_user_first_name():
 def current_user_email():
     return session.get("user_email", "")
 
+def valid_password(password):
+    if len(password) < 8:
+        return False
+    if not re.search(r"\d", password):
+        return False
+    if not re.search(r"[A-z]", password):
+        return False
+    if not re.search(r"[a-z]", password):
+        return False
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+        return False
+    return True
+
 
 def is_owner(item):
     return item and item.get("seller") == current_user_first_name()
@@ -674,6 +687,10 @@ def register():
 
         if not email.endswith("@student.uwa.edu.au"):
             flash("Please use your UWA student email.")
+            return redirect(url_for("register"))
+        
+        if not valid_password(password):
+            flash("Password must be atleast 8 characters long and include lowercase, uppercase, number and a special character.")
             return redirect(url_for("register"))
 
         if password != confirm_password:

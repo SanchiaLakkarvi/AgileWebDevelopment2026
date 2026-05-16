@@ -216,6 +216,6 @@ data/*.db
 .DS_Store
 **/.DS_Store
 static/images/uploads/*
-!static/images/uploads/.gitkeepdata/marketplace.json
+!static/images/uploads/.gitkeep
 data/marketplace.json
 data/marketplace.json

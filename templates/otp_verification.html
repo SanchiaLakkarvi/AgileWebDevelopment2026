@@ -9,7 +9,7 @@
 
 <div class="register-page min-vh-100 d-flex justify-content-center align-items-center">
 
-
+    <!-- Form to get otp value from user and match with generated otp value -->
     <form id="otp-page " class="bg-white bg-opacity-75 p-4 rounded-4 shadow" method="POST" action="{{ url_for('otp_verification') }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="email" value="{{ email }}">

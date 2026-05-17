@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+{% endblock %}
+
+{% block content %}
+<div data-navbar data-active="{{ active_nav }}"></div>
+
+<div class="profile-page min-vh-100 d-flex flex-column justify-content-center align-items-center">
+
+  <form method="POST" class="bg-white bg-opacity-75 p-4 rounded-4 shadow" action="{{ url_for('remove_account') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <h3 class="text-center mb-4">My Profile</h3>
+
+    <div class="mb-3 row">
+      <label class="form-label">Full Name:</label>
+      <div class="col">
+        <input type="text" class="form-control form-control-lg mb-3" value="{{ user.first_name }}" disabled>
+      </div>
+      <div class="col">
+        <input type="text" class="form-control form-control-lg mb-3" value="{{ user.last_name }}" disabled>
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Email ID:</label>
+      <input type="email" class="form-control form-control-lg mb-3" value="{{ user.email }}" disabled>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Date of Birth:</label>
+      <input type="text" class="form-control form-control-lg mb-3" value="{{ user.dob }}" disabled>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Gender:</label>
+      <input type="text" class="form-control form-control-lg mb-3" value="{{ user.gender }}" disabled>
+    </div>
+
+    <a href="{{ url_for('logout') }}" class="btn btn-primary btn-lg w-100">Logout</a>
+
+    <hr class="my-4">
+
+    <div class="mb-3">
+        <h5 class="text-center mb-4"><Strong>Delete Account</Strong></h5>
+        <label class="form-label">Enter your password to delete account:</label>
+        <input type="password" id="delete-password" name="password" class="form-control form-control-lg" placeholder="Enter your password" autocomplete="new-password" required>
+    </div>
+
+    <button type="submit" class="btn btn-danger btn-lg w-100">Delete account</button>
+
+  </form>
+</div>
+
+{% endblock %}

@@ -28,25 +28,19 @@
                         Inbox{% if unread_count > 0 %}<span class="message-badge-inline">{{ unread_count }}</span>{% endif %}
                     </a>
                 </li>
-<<<<<<< HEAD
-<<<<<<< HEAD
-                <li class="nav-item"><a class="nav-link text-white" href="{{ url_for('profile') }}">Profile</a></li>
-                <li class="nav-item"><span class="profile-circle">S</span></li>
-=======
-=======
-                <li class="nav-item"><a class="nav-link text-white" href="{{ url_for('profile') }}">Profile</a></li>
-                <li class="nav-item"><span class="profile-circle">S</span></li>
->>>>>>> 96ce6ad0aee4c0f11336de74b8d4fe9846411aa5
-                <li class="nav-item"><a class="nav-link text-white" href="{{ url_for('logout') }}">Logout</a></li>
-                <li class="nav-item">
-                    <span class="profile-circle">
-                        {{ current_user[0]|upper if current_user else "U" }}
-                    </span>
-                </li>
-<<<<<<< HEAD
->>>>>>> 49c18ec242377289b78862bec014feee1679cf5b
-=======
->>>>>>> 96ce6ad0aee4c0f11336de74b8d4fe9846411aa5
+<li class="nav-item">
+    <a class="nav-link text-white" href="{{ url_for('profile') }}">Profile</a>
+</li>
+
+<li class="nav-item">
+    <span class="profile-circle">
+        {{ current_user[0]|upper if current_user else "U" }}
+    </span>
+</li>
+
+<li class="nav-item">
+    <a class="nav-link text-white" href="{{ url_for('logout') }}">Logout</a>
+</li>
             </ul>
         </div>
         {% endif %}

@@ -707,7 +707,7 @@ def login():
         
         if not user.is_verified:
             flash("Account not verified. A new OTP has been sent to your email, please verify first!")
-            return redirect(url_for("otp_verification", email=user.email))
+            return redirect(url_for("otp_verification", email=user.email, active_nav="otp_verification"))
         
         # This will keep the login session until we logout
         session["user_id"] = user.id
@@ -766,7 +766,7 @@ def register():
             send_otp(email, otp)
 
             flash("Account already registered but not verified. A new OTP has been sent to your email, please verify!")
-            return redirect(url_for("otp_verification", email=email))
+            return redirect(url_for("otp_verification", email=email,active_nav="otp_verification"))
 
 
         otp = create_otp()
@@ -790,7 +790,7 @@ def register():
         send_otp(email, otp)
 
         flash("Account created successfully. Please check your email for OTP.")
-        return redirect(url_for("otp_verification", email=email))
+        return redirect(url_for("otp_verification", email=email, active_nav="otp_verification"))
 
     return render_template("register.html", active_nav="register")
 
@@ -806,7 +806,7 @@ def otp_verification():
 
         if not user or user.otp_number != entered_otp:
             flash("Invalid OTP. Please try again.")
-            return redirect(url_for("otp_verification", email=email))
+            return redirect(url_for("otp_verification", email=email, active_nav="otp_verification"))
 
         user.is_verified = True
         user.otp_number = None
@@ -817,7 +817,7 @@ def otp_verification():
         flash("Email verified successfully. You can now login.")
         return redirect(url_for("login"))
 
-    return render_template("otp_verification.html", email=email)
+    return render_template("otp_verification.html", email=email, active_nav="otp_verification")
 
 @app.route("/resend-otp")
 def resend_otp():
@@ -832,7 +832,7 @@ def resend_otp():
     send_otp(email, otp)
 
     flash("New OTP sent to your email.")
-    return redirect(url_for("otp_verification", email=email))
+    return redirect(url_for("otp_verification", email=email, active_nav="otp_verification"))
 
 
 @app.route("/marketplace")

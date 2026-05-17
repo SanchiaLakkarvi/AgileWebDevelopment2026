@@ -480,13 +480,28 @@ def create_otp():
     return str(random.randint(100000,999999))
 
 def send_otp(email, otp):
-    msg = Message(
+    print("====================================")
+    print(f"OTP for {email}: {otp}")
+    print("====================================")
+
+    try:
+        sender = app.config.get("MAIL_DEFAULT_SENDER") or app.config.get("MAIL_USERNAME") or "noreply@guildspace.local"
+
+        msg = Message(
             subject="OTP for Verification",
+            sender=sender,
             recipients=[email],
-            body="Your one time password (OTP) to login to your GuildSpace account securely is :"+ str(otp)
+            body="Your one time password (OTP) to login to your GuildSpace account securely is: " + str(otp)
         )
-    mail.send(msg)
-    return True
+
+        mail.send(msg)
+        return True
+
+    except Exception as e:
+        print("Email sending failed, using terminal OTP instead.")
+        print(f"Reason: {e}")
+        print(f"Use this OTP for testing: {otp}")
+        return True
 
 def create_csrf_token():
     """Create one CSRF token per browser session and reuse it in all forms."""

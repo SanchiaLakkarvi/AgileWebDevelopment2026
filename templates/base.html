@@ -28,12 +28,24 @@
                         Inbox{% if unread_count > 0 %}<span class="message-badge-inline">{{ unread_count }}</span>{% endif %}
                     </a>
                 </li>
+<<<<<<< HEAD
                 <li class="nav-item"><a class="nav-link text-white" href="{{ url_for('profile') }}">Profile</a></li>
                 <li class="nav-item">
                     <span class="profile-circle">
                         {{ current_user[0]|upper if current_user else "U" }}
                     </span>
                 </li>
+=======
+<li class="nav-item">
+    <a class="profile-circle text-decoration-none" href="{{ url_for('profile') }}">
+        {{ current_user[0]|upper if current_user else "U" }}
+    </a>
+</li>
+
+<li class="nav-item">
+    <a class="nav-link text-white" href="{{ url_for('logout') }}">Logout</a>
+</li>
+>>>>>>> a7ca149c63dbddfab5a2ff6e1059c4f272d40ee2
             </ul>
         </div>
         {% endif %}
